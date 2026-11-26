@@ -56,27 +56,37 @@ export async function fightUntilLandable(page: Page) {
   if (end !== 'landable') throw new Error(`trận kéo kết thúc ở pha ${end}`)
 }
 
-/** Đợi phao báo ăn thật rồi giật ngay trong trang (như người đang nhìn phao), tránh độ trễ của Playwright. */
+/**
+ * Đợi phao báo ăn thật rồi giật (như người đang nhìn phao). Đọc mốc thời gian của lượt câu qua móc test
+ * (chỉ có ở ?fast=1) thay vì đợi trang vẽ ra "window": máy CI vẽ 3D bằng phần mềm có khi chỉ vài khung hình
+ * mỗi giây, cửa sổ giật 0,8 s có thể trôi qua giữa hai lần vẽ.
+ */
 export async function strikeOnWindow(page: Page, timeoutMs = 30_000) {
   const r = await page.evaluate(
     (timeout) =>
       new Promise<string>((resolve) => {
-        const app = document.querySelector<HTMLElement>('[data-testid=app]')!
+        type Bite = { strikeOpen: number; strikeClose: number; empty?: boolean }
+        type St = { game: { phase: string; bite?: Bite } }
+        const store = (globalThis as unknown as { __canThu?: { getState(): St } }).__canThu
+        if (!store) return resolve('không có móc test: mở trang với ?fast=1')
         const started = Date.now()
         const timer = setInterval(() => {
-          if (app.dataset.wait === 'window') {
+          const { game } = store.getState()
+          const b = game.bite
+          const now = Date.now()
+          if (b && !b.empty && (game.phase === 'waiting' || game.phase === 'sinking') && now >= b.strikeOpen + 60 && now <= b.strikeClose - 60) {
             window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ', bubbles: true }))
             window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Space', key: ' ', bubbles: true }))
             clearInterval(timer)
             resolve('ok')
-          } else if (app.dataset.phase === 'result' || Date.now() - started > timeout) {
+          } else if (game.phase === 'result' || b?.empty || now - started > timeout) {
             clearInterval(timer)
-            resolve(`không thấy cửa sổ giật (pha ${app.dataset.phase}): ${document.querySelector('[data-testid=hint]')?.textContent}`)
+            resolve(`không giật được (pha ${game.phase}${b?.empty ? ', mồi rã trước khi cá tới' : ''}): ${document.querySelector('[data-testid=hint]')?.textContent}`)
           }
-        }, 40)
+        }, 20)
       }),
     timeoutMs,
   )
   if (r !== 'ok') throw new Error(r)
-  await expect(app(page)).toHaveAttribute('data-phase', /fighting|landable/)
+  await expect(app(page)).toHaveAttribute('data-phase', /fighting|landable|result/)
 }

@@ -326,6 +326,9 @@ export const useGame: UseBoundStore<StoreApi<Store>> = create<Store>((set, get) 
   },
 }))
 
+// Chế độ test (?fast=1): cho e2e đọc mốc thời gian của lượt câu, để không phụ thuộc tốc độ vẽ của máy test.
+if (FAST) (globalThis as unknown as { __canThu?: typeof useGame }).__canThu = useGame
+
 // ---------------------------------------------------------------- side effects
 
 function readJson<T>(k: string): T | undefined {
