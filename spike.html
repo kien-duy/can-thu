@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spike báo động</title>
+    <style>
+      :root { --bg:#F6F1E7; --surface:#fff; --text:#1E2A2F; --muted:#55636A; --primary:#C2410C; --on-primary:#fff; }
+      @media (prefers-color-scheme: dark) {
+        :root { --bg:#0F1A1F; --surface:#172730; --text:#ECE6DA; --muted:#A3B0B5; --primary:#F07A3E; --on-primary:#1A0F08; }
+      }
+      body { margin:0; padding:24px 16px; background:var(--bg); color:var(--text); font:15px/1.5 system-ui, sans-serif; }
+      main { max-width: 960px; margin: 0 auto; }
+      h1 { font-size: 22px; margin: 0 0 4px; }
+      p { color: var(--muted); margin: 0 0 16px; }
+      .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+      button { background:var(--primary); color:var(--on-primary); border:0; border-radius:8px; padding:10px 14px; font:inherit; font-weight:600; cursor:pointer; }
+      button.secondary { background:transparent; color:var(--text); border:1px solid var(--muted); }
+      pre { background:var(--surface); padding:12px; border-radius:8px; white-space:pre-wrap; font-size:12px; }
+      .table-wrap { overflow-x:auto; }
+      table { width:100%; border-collapse:collapse; background:var(--surface); border-radius:8px; font-size:13px; }
+      th, td { text-align:left; padding:6px 8px; border-bottom:1px solid color-mix(in srgb, var(--muted) 25%, transparent); white-space:nowrap; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Spike M0: báo động khi tab ẩn</h1>
+      <p>Bấm một nút để lên lịch các mốc thử, rồi chuyển sang ứng dụng khác. Mỗi mốc được đo bằng timer trong Worker và timer ở trang (đối chứng). "Trễ" là số ms sau mốc dự kiến.</p>
+      <div class="row">
+        <button id="start-fast" data-testid="start-fast">Đo nhanh (5 s, 15 s, 30 s)</button>
+        <button id="start-full" data-testid="start-full">Đo đầy đủ (30 s, 2 phút, 10 phút)</button>
+        <label><input type="checkbox" id="notify" checked /> Thông báo hệ thống</label>
+        <button id="copy" class="secondary">Chép kết quả JSON</button>
+      </div>
+      <p id="status" data-testid="status"></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Mốc</th><th>Đường</th><th>Dự kiến</th><th>Trễ</th><th>Tab</th><th>Âm thanh</th><th>Thông báo</th><th>Lỗi</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <pre id="env"></pre>
+    </main>
+    <script type="module" src="/src/spike/main.ts"></script>
+  </body>
+</html>

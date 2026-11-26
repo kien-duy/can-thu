@@ -1,0 +1,13 @@
+node_modules
+dist
+.env
+.env.*
+!.env.example
+playwright-report
+test-results
+*.tsbuildinfo
+.DS_Store
+.claude/settings.local.json
+
+# Ảnh chụp bản tham khảo: chỉ để so bố cục trên máy, không phát tán (repo public)
+replica/screens/

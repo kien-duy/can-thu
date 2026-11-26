@@ -1,0 +1,58 @@
+feature,area,priority,original,clone,notes
+Chơi ngay bằng tài khoản khách,onboarding,must,yes,no,Bản gốc có 3 modal trước khi chơi; mình vào thẳng ô câu
+Liên kết Google/email để giữ tiến độ,account,must,yes,no,Supabase Auth; bản gốc dùng Google hoặc user+mật khẩu
+Lưu tiến độ lên server,account,must,partial,no,Bản gốc mặc định lưu localStorage
+Hướng dẫn trong lúc chơi (quăng/canh/giật/vớt),onboarding,must,yes,no,Coach bar 4 bước
+Chọn địa điểm câu,locations,must,yes,no,Bản gốc 8 hồ dịch vụ; mình 3 địa điểm khác loại
+Vé ca câu theo giờ (hồ dịch vụ),locations,must,yes,no,Bản gốc 3–8 tiếng giờ game; mình theo giờ thật 1/2/4 tiếng
+Địa điểm tự nhiên miễn phí (sông/hồ núi),locations,must,no,no,Điểm khác biệt
+Đồng hồ theo giờ thật,world,must,no,no,Bản gốc dùng giờ game tua nhanh
+Thời tiết + nhiệt độ nước ảnh hưởng cá,world,must,yes,no,
+Quăng có lực (giữ - thả),core,must,yes,no,
+Bàn cân phao (chì / độ sâu / dò đáy),core,must,yes,no,Bản gốc chỉnh theo g và cm + 6 preset
+Preset cân phao có gợi ý theo điều kiện,core,must,yes,no,
+Trộn mồi theo công thức,core,must,yes,no,Bản gốc có khoảng 23 nguyên liệu; mình rút gọn trục tanh/thơm/chua/độ tơi
+Bài mồi gợi ý theo loài,core,must,yes,no,
+Nhịp phao riêng theo loài (chờ/giật/đừng giật),core,must,yes,no,Bản gốc khoảng 45 nhịp cho 11 loài
+Cửa sổ rỉa dài cho người văn phòng,core,must,no,no,Bản gốc nhả mồi dưới 1 s
+Mô phỏng chạy khi tab ẩn + báo động,office,must,no,no,Bản gốc dừng hẳn khi ẩn tab
+Thông báo hệ thống / tiêu đề tab / âm thanh khi cá rỉa,office,must,no,no,
+Chế độ văn phòng (cận cảnh phao nhẹ máy),office,must,no,no,
+Kéo cá: ghì / tay mềm / dòng cá,core,must,yes,no,
+Đứt thẻo / gãy cần / cá vượt sức,core,must,yes,no,
+Vớt cá khi cá đuối và gần bờ,core,must,yes,no,
+Rọng + kết thúc ca cân cá bán tiền,economy,must,yes,no,
+Sổ tay: danh mục loài + nhật ký từng con,handbook,must,partial,no,Bản gốc chỉ có ??? + nhật ký; mình có đặc tính đời thật
+Cửa hàng đồ nghề cơ bản (cần/dây/lưỡi/phao/mồi),economy,must,yes,no,
+Cảnh 3D ngồi câu,visual,should,yes,no,
+Camera tự zoom vào phao khi có cá rỉa,visual,should,no,no,
+Góc nhìn rộng toàn cảnh,visual,should,yes,no,
+Động vật ghé qua theo địa điểm/giờ/thời tiết,visual,should,no,no,
+Sổ tay: Sinh vật đã gặp,handbook,should,no,no,
+Kho nhịp phao xem thử + tập giật,handbook,should,yes,no,
+Nhìn xuyên nước (chế độ học),core,should,yes,no,
+Mồi xả mở ổ / ổ nguội dần,core,should,yes,no,
+Mồi rã theo thời gian,core,should,yes,no,
+Túi đồ đổi nhanh,economy,should,yes,no,
+Cấp độ/XP mở khoá địa điểm và đồ,economy,should,partial,no,Bản gốc khoá theo độ cứng cần
+Nhiệm vụ ngày,economy,should,yes,no,
+Kỷ lục cá to nhất theo loài,handbook,should,yes,no,
+Cài đặt chất lượng đồ hoạ Thấp/Vừa/Cao,settings,should,no,no,
+Cài đặt cỡ khung phao / kiểu kéo cá,settings,should,yes,no,
+Thành tích có bậc,meta,could,yes,no,Bản gốc 101 bậc / 34 danh hiệu
+Mặt cắt 2D,visual,could,yes,no,
+Hàng xóm NPC câu cá quanh hồ,visual,could,yes,no,
+Sơ đồ hồ đổi chỗ ngồi,locations,could,yes,no,
+Đi dạo quanh hồ / quán nước,world,could,yes,no,
+Đồ trang trí (chỉ đổi hình thức),meta,could,yes,no,
+Tiếng Anh,settings,could,no,no,
+PWA cài lên màn hình chính,platform,could,yes,no,
+Mobile,platform,could,yes,no,
+Bảng xếp hạng,meta,could,yes,no,Cần chuyển logic lên server
+Chơi online cùng hồ + chat,social,skip,yes,no,Mạng lưới người dùng của họ; ngoài phạm vi bản đầu
+Giải đấu người thật theo giờ,social,skip,yes,no,
+Hội câu / bạn bè / tin nhắn,social,skip,yes,no,
+Nạp tiền thật (x2),economy,skip,yes,no,Trái quyết định không nạp tiền
+Nút ủng hộ / nhóm Facebook nhận quà,economy,skip,yes,no,
+Mời bạn nhận tiền,economy,skip,yes,no,
+Tên / chữ / tên hồ / tên dòng cần của bản gốc,legal,skip,yes,no,Bản quyền thuộc chủ game

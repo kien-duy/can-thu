@@ -1,0 +1,25 @@
+{
+  "name": "Cần Thủ",
+  "name_status": "chốt bởi chủ dự án 2026-11-26",
+  "avoid": [
+    "Câu Đài Hồ Dịch Vụ",
+    "Câu Đài",
+    "cauca-trieutam",
+    "Triệu Tâm",
+    "Trieu Tam",
+    "Bảy Lộc",
+    "Long Vương",
+    "Tre Làng",
+    "Sao Mai",
+    "Phù Sa"
+  ],
+  "domains": [
+    "cauca-trieutam.netlify.app"
+  ],
+  "colors": [
+    "#6abf69",
+    "#f5c84c"
+  ],
+  "colors_note": "màu CTA xanh lá và vàng nhấn của bản tham khảo, ước lượng từ ảnh chụp",
+  "slug": "can-thu"
+}
