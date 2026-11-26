@@ -68,6 +68,8 @@ export type GameEvent =
   | { type: 'tick'; t: number; paused?: boolean }
   | { type: 'strike'; t: number }
   | { type: 'reel'; t: number; on: boolean }
+  /** dòng cá: nghiêng cần sang trái (-1), phải (1), hoặc giữ thẳng (0) */
+  | { type: 'steer'; t: number; side: -1 | 0 | 1 }
   | { type: 'net'; t: number }
   | { type: 'reset'; t: number }
 
@@ -135,6 +137,10 @@ export function reduce(cfg: GameConfig, s: GameState, e: GameEvent): GameState {
     case 'reel':
       return { ...s, reeling: e.on }
 
+    case 'steer':
+      if ((s.phase !== 'fighting' && s.phase !== 'landable') || !s.fight || s.fight.rodSide === e.side) return s
+      return { ...s, fight: { ...s.fight, rodSide: e.side } }
+
     case 'net': {
       if (s.phase !== 'landable' || !s.fight) return s
       const f = s.fight
@@ -164,7 +170,7 @@ function tick(_cfg: GameConfig, s: GameState, t: number, paused: boolean): GameS
     return { ...s, phase: 'result', result: { kind: 'gone', speciesId: s.bite!.speciesId }, lastTick: t }
   }
   if ((s.phase === 'fighting' || s.phase === 'landable') && s.fight) {
-    if (paused) return { ...s, reeling: false, lastTick: t, landableSince: s.landableSince === undefined ? undefined : t }
+    if (paused) return { ...s, reeling: false, fight: s.fight.rodSide === 0 ? s.fight : { ...s.fight, rodSide: 0 }, lastTick: t, landableSince: s.landableSince === undefined ? undefined : t }
     if (s.phase === 'landable') {
       if (t - (s.landableSince ?? t) <= LANDABLE_GRACE_MS) return { ...s, lastTick: t }
       // cá hồi sức, lặn xuống: kéo tiếp

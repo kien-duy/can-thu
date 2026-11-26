@@ -30,25 +30,38 @@ export async function castLine(page: Page) {
 
 /**
  * Kéo cá như một người chơi bình thường: cứ 120 ms nhìn thanh căng dây một lần (phản xạ người),
- * ghì khi dây chưa căng, thả khi căng. Chạy hẳn trong trang để độ trễ của Playwright không làm sai lệch.
+ * ghì khi dây chưa căng, thả khi căng, và dòng cần ngược hướng cá chạy (đọc data-fish-dir; trang cũ không có
+ * thuộc tính này thì giữ cần thẳng). Chạy hẳn trong trang để độ trễ của Playwright không làm sai lệch.
  */
 export async function fightUntilLandable(page: Page) {
   const end = await page.evaluate(
     () =>
       new Promise<string>((resolve) => {
         const app = document.querySelector<HTMLElement>('[data-testid=app]')!
-        const key = (type: 'keydown' | 'keyup') => window.dispatchEvent(new KeyboardEvent(type, { code: 'Space', key: ' ', bubbles: true }))
+        const press = (type: 'keydown' | 'keyup', code: string, key: string) => window.dispatchEvent(new KeyboardEvent(type, { code, key, bubbles: true }))
+        const key = (type: 'keydown' | 'keyup') => press(type, 'Space', ' ')
+        const STEER = { [-1]: ['KeyA', 'a'], [1]: ['KeyD', 'd'] } as Record<number, [string, string]>
         let holding = false
+        let side = 0
+        const lean = (want: number) => {
+          if (want === side) return
+          if (STEER[side]) press('keyup', ...STEER[side])
+          if (STEER[want]) press('keydown', ...STEER[want])
+          side = want
+        }
         const started = Date.now()
         const timer = setInterval(() => {
           const phase = app.dataset.phase
           if (phase !== 'fighting') {
             if (holding) key('keyup')
+            lean(0)
             clearInterval(timer)
             resolve(phase === 'landable' ? 'landable' : `${phase}: ${document.querySelector('[data-testid=hint]')?.textContent}`)
             return
           }
           const tension = Number(app.dataset.tension)
+          const dir = Number(app.dataset.fishDir ?? 0)
+          lean(dir === 1 || dir === -1 ? -dir : 0)
           if (tension < 0.7 && !holding) {
             key('keydown')
             holding = true
@@ -57,6 +70,7 @@ export async function fightUntilLandable(page: Page) {
             holding = false
           }
           if (Date.now() - started > 90_000) {
+            lean(0)
             clearInterval(timer)
             resolve('quá lâu')
           }

@@ -277,17 +277,25 @@ function RodAndLine() {
     return new THREE.Line(geo, new THREE.LineBasicMaterial({ color: '#f4f4f4', transparent: true, opacity: 0.7 }))
   }, [])
   const rod = useRef<THREE.Mesh>(null)
-  useFrame(({ clock }) => {
+  // vị trí ngang của đầu dây và độ nghiêng cần, trượt dần về đích cho mượt
+  const lineX = useRef(0)
+  const rodTilt = useRef(0)
+  useFrame(({ clock }, delta) => {
     const { game, now } = useGame.getState()
     const pos = line.geometry.attributes.position as THREE.BufferAttribute
     line.visible = game.phase !== 'ready' && game.phase !== 'charging' && !(game.phase === 'result' && game.result?.kind !== 'landed')
     let end: THREE.Vector3
     if ((game.phase === 'fighting' || game.phase === 'landable') && game.fight) {
       const f = game.fight
-      end = new THREE.Vector3(Math.sin(clock.elapsedTime * 1.3) * 1.2 * Math.min(1, f.distanceM / 6), -0.05, -f.distanceM)
+      // cá chạy về phía nào thì đầu dây kéo về phía đó; ghì thẳng thì chỉ đung đưa nhẹ
+      const reach = Math.min(1, f.distanceM / 6)
+      const goal = f.fishDir * 2.2 * reach + Math.sin(clock.elapsedTime * 1.3) * 0.25 * reach
+      lineX.current += (goal - lineX.current) * Math.min(1, delta * 2.5)
+      end = new THREE.Vector3(lineX.current, -0.05, -f.distanceM)
     } else {
       const pose = floatPose(game, now)
       end = new THREE.Vector3(0.2, (2 - pose.sink) * SEG + 0.02, -(game.cast?.distanceM ?? 7))
+      lineX.current = end.x
     }
     pos.setXYZ(1, end.x, end.y, end.z)
     pos.needsUpdate = true
@@ -295,6 +303,9 @@ function RodAndLine() {
       const bend = game.phase === 'fighting' || game.phase === 'landable' ? Math.min(1.2, game.fight?.tension ?? 0) * 0.35 : 0
       const charge = game.phase === 'charging' && game.chargeStartedAt ? Math.min(1, (now - game.chargeStartedAt) / 1200) * 0.6 : 0
       rod.current.rotation.x = -1.05 + bend + charge
+      const side = (game.phase === 'fighting' || game.phase === 'landable') && game.fight ? game.fight.rodSide : 0
+      rodTilt.current += (-side * 0.25 - rodTilt.current) * Math.min(1, delta * 6)
+      rod.current.rotation.z = rodTilt.current
     }
   })
   return (

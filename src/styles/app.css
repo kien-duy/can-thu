@@ -217,6 +217,24 @@ button:focus-visible {
   padding: 10px 14px;
   box-shadow: var(--shadow);
 }
+.fight__steer {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+}
+.fight__dir {
+  text-align: center;
+}
+.fight__steer-btn {
+  min-height: 44px;
+  padding: 0;
+  touch-action: none;
+  user-select: none;
+}
+.fight__steer-btn.is-active {
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+}
 .meter {
   display: grid;
   grid-template-columns: 96px 1fr;
