@@ -100,7 +100,9 @@ const GearSchema = z.object({
   rods: z.array(z.object({ ...priced, strength: z.number().positive(), castBonusM: z.number().nonnegative() })),
   lines: z.array(z.object({ ...priced, strength: z.number().positive(), shyFactor: z.number().positive().max(1) })),
   floats: z.array(z.object({ ...priced, sensitivity: z.number().positive() })),
-  starter: z.object({ rod: id, line: id, float: id, rig: id }),
+  /** lưỡi câu: bestForG = khoảng cân nặng cá (g) mà cỡ lưỡi này hợp */
+  hooks: z.array(z.object({ ...priced, sizeNo: z.number().int().positive(), bestForG: range })).min(1),
+  starter: z.object({ rod: id, line: id, float: id, rig: id, hook: id }),
 })
 
 export const CreatureSchema = z.object({
@@ -139,6 +141,7 @@ export type Gear = z.infer<typeof GearSchema>
 export type Rod = Gear['rods'][number]
 export type Line = Gear['lines'][number]
 export type FloatGear = Gear['floats'][number]
+export type Hook = Gear['hooks'][number]
 
 export const SPECIES: readonly Species[] = z.array(SpeciesSchema).parse(speciesJson)
 export const LOCATIONS: readonly Location[] = z.array(LocationSchema).parse(locationsJson)
@@ -167,8 +170,13 @@ for (const q of QUESTS.templates) {
 for (const k of Object.keys(BAIT.starterStock)) if (!ingredientIds.has(k)) throw new Error(`content: starterStock có ${k}`)
 {
   const s = GEAR.starter
-  if (!GEAR.rods.some((x) => x.id === s.rod) || !GEAR.lines.some((x) => x.id === s.line) || !GEAR.floats.some((x) => x.id === s.float) || !GEAR.rigs.some((x) => x.id === s.rig)) {
+  if (!GEAR.rods.some((x) => x.id === s.rod) || !GEAR.lines.some((x) => x.id === s.line) || !GEAR.floats.some((x) => x.id === s.float) || !GEAR.rigs.some((x) => x.id === s.rig) || !GEAR.hooks.some((x) => x.id === s.hook)) {
     throw new Error('content: đồ khởi đầu không có trong gear.json')
+  }
+  const hookIds = new Set<string>()
+  for (const h of GEAR.hooks) {
+    if (hookIds.has(h.id)) throw new Error(`content: lưỡi ${h.id} bị trùng id`)
+    hookIds.add(h.id)
   }
 }
 
@@ -194,3 +202,4 @@ export const rodOf = (x: string) => GEAR.rods.find((r) => r.id === x) ?? GEAR.ro
 export const lineOf = (x: string) => GEAR.lines.find((r) => r.id === x) ?? GEAR.lines[0]!
 export const floatOf = (x: string) => GEAR.floats.find((r) => r.id === x) ?? GEAR.floats[0]!
 export const rigOf = (x: string) => GEAR.rigs.find((r) => r.id === x) ?? GEAR.rigs[0]!
+export const hookOf = (x: string) => GEAR.hooks.find((r) => r.id === x) ?? GEAR.hooks.find((r) => r.id === GEAR.starter.hook)!

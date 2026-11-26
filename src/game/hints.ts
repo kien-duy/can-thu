@@ -78,6 +78,7 @@ function resultText(s: GameState): string {
     case 'rod_broke':
       return 'Rắc, gãy cần, cá đi rồi. Dây căng đỏ là thả tay ngay. Dây khoẻ hơn cần nhiều thì lúc quá tải cần gánh hết lực: chọn dây vừa sức cần.'
     case 'escaped':
+      if (r.reason === 'unhooked') return 'Tuột lưỡi: lưỡi nhỏ so với cá. Gặp cá cỡ này thì buộc lưỡi to hơn.'
       return 'Cá chạy xa quá, tuột lưỡi rồi.'
   }
 }

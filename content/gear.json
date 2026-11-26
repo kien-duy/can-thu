@@ -113,10 +113,49 @@
       "minLevel": 2
     }
   ],
+  "hooks": [
+    {
+      "id": "luoi_1",
+      "nameVi": "Lưỡi số 1",
+      "note": "Lưỡi nhỏ, mảnh, giấu gọn trong viên mồi. Diếc, trôi, mương mút mồi là dính, nhưng gặp cá to dễ tuột.",
+      "priceXu": 80,
+      "minLevel": 1,
+      "sizeNo": 1,
+      "bestForG": [20, 400]
+    },
+    {
+      "id": "luoi_3",
+      "nameVi": "Lưỡi số 3",
+      "note": "Lưỡi khởi đầu, cỡ vừa. Hợp rô phi, điêu hồng và phần lớn cá hồ dịch vụ.",
+      "priceXu": 0,
+      "minLevel": 1,
+      "sizeNo": 3,
+      "bestForG": [80, 2000]
+    },
+    {
+      "id": "luoi_5",
+      "nameVi": "Lưỡi số 5",
+      "note": "Lưỡi to, ngạnh chắc. Giữ được rô phi to, chép, trắm cỏ; cá nhỏ ngậm không trọn nên ít ăn hơn.",
+      "priceXu": 150,
+      "minLevel": 2,
+      "sizeNo": 5,
+      "bestForG": [400, 6000]
+    },
+    {
+      "id": "luoi_8",
+      "nameVi": "Lưỡi số 8",
+      "note": "Lưỡi lớn, thép dày, cho trắm đen, lăng, mè. Cá tạp gần như không ngậm nổi.",
+      "priceXu": 400,
+      "minLevel": 3,
+      "sizeNo": 8,
+      "bestForG": [1500, 25000]
+    }
+  ],
   "starter": {
     "rod": "can_tre_36",
     "line": "day_10",
     "float": "phao_nano",
-    "rig": "can4_cau2"
+    "rig": "can4_cau2",
+    "hook": "luoi_3"
   }
 }

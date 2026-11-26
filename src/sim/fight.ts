@@ -36,6 +36,10 @@ export interface FightState {
   rodSide: -1 | 0 | 1
   /** chuỗi RNG riêng cho hướng cá chạy, để không xáo nhịp vật vốn có */
   dirRng: number
+  /** cá nặng hơn ngần này (g) thì lưỡi nhỏ so với cá, mỗi nhịp vùng chạy có thể tuột; không có = lưỡi vừa */
+  hookMaxG?: number
+  /** true = lưỡi đã tuột khỏi miệng cá */
+  unhooked?: boolean
 }
 
 export type FightOutcome = 'fighting' | 'landable' | 'broke' | 'escaped'
@@ -53,7 +57,7 @@ export const STEER_GOOD_LINE = 0.6
 export const STEER_BAD_TENSION = 0.15
 export const STEER_BAD_LINE = 1.3
 
-export function initFight(s: Species, weightG: number, distanceM: number, seed: number, strength = 1, rodStrength = 1, lineStrength = 1): FightState {
+export function initFight(s: Species, weightG: number, distanceM: number, seed: number, strength = 1, rodStrength = 1, lineStrength = 1, hookMaxG?: number): FightState {
   const size = Math.min(2.2, Math.max(0.4, weightG / s.typicalG))
   const [r, rng] = rngStep(seed)
   return {
@@ -77,6 +81,7 @@ export function initFight(s: Species, weightG: number, distanceM: number, seed: 
     fishDir: 0,
     rodSide: 0,
     dirRng: (seed ^ 0x5bd1e995) >>> 0,
+    hookMaxG,
   }
 }
 
@@ -124,8 +129,24 @@ function step(f: FightState, reeling: boolean): FightState {
   return { ...f, rng, surgeUntil, nextSurgeAt, elapsedMs, pull, tension, distanceM, stamina, overloadMs, fishDir, dirRng }
 }
 
+/** Cơ hội tuột lưỡi mỗi lần cá vùng chạy: 0 khi lưỡi vừa; cá nặng gấp đôi sức lưỡi thì 1/4, trần 1/2. */
+export function unhookChance(weightG: number, hookMaxG?: number): number {
+  if (hookMaxG === undefined || weightG <= hookMaxG) return 0
+  return Math.min(0.5, 0.25 * (weightG / hookMaxG - 1))
+}
+
+/** Vừa bắt đầu một nhịp vùng chạy thì gieo xem lưỡi có giữ nổi không (chỉ gieo khi lưỡi nhỏ so với cá). */
+function holdHook(prev: FightState, next: FightState): FightState {
+  if (next.unhooked || next.nextSurgeAt === prev.nextSurgeAt) return next
+  const chance = unhookChance(next.weightG, next.hookMaxG)
+  if (chance <= 0) return next
+  const [r, rng] = rngStep(next.rng)
+  return r < chance ? { ...next, rng, unhooked: true } : { ...next, rng }
+}
+
 export function outcomeOf(f: FightState): FightOutcome {
   if (f.overloadMs >= OVERLOAD_MS) return 'broke'
+  if (f.unhooked) return 'escaped'
   if (f.distanceM > ESCAPE_DISTANCE_M) return 'escaped'
   if (f.distanceM <= LANDABLE_DISTANCE_M && f.stamina <= LANDABLE_STAMINA) return 'landable'
   return 'fighting'
@@ -135,7 +156,7 @@ export function outcomeOf(f: FightState): FightOutcome {
 export function advanceFight(f: FightState, ms: number, reeling: boolean): FightState {
   let s = f
   for (let left = ms; left >= STEP_MS; left -= STEP_MS) {
-    s = step(s, reeling)
+    s = holdHook(s, step(s, reeling))
     const o = outcomeOf(s)
     if (o === 'broke' || o === 'escaped') break
   }

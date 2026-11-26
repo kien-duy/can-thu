@@ -1,11 +1,11 @@
 /**
  * Đồ nghề, mồi, cân phao và điều kiện nước ảnh hưởng tới việc cá cắn. Toàn hàm thuần.
  *
- *   trọng số loài = trọng số ở hồ × giờ ăn × hợp mồi × hợp nhiệt độ × hợp tầng nước × ngại dây
+ *   trọng số loài = trọng số ở hồ × giờ ăn × hợp mồi × hợp nhiệt độ × hợp tầng nước × ngại dây × cỡ lưỡi
  *   thời gian chờ = cơ bản ÷ độ hấp dẫn tổng (có trần, có sàn)
  *   độ to của phao = cân phao × loại phao × độ sâu có đúng không
  */
-import { AXES, type Axes, BAIT, type FloatGear, type Line, type Location, type Rig, type Species } from '../content'
+import { AXES, type Axes, BAIT, type FloatGear, type Hook, type Line, type Location, type Rig, type Species } from '../content'
 
 /** Tình trạng câu lúc quăng, gom từ túi đồ của người chơi. */
 export interface Setup {
@@ -27,6 +27,8 @@ export interface Setup {
   castBonusM: number
   /** độ đậm của ổ mồi xả ở chỗ đang câu, 0..1 (đã tính phân rã theo thời gian) */
   chum?: number
+  /** lưỡi câu đang buộc; không có thì coi như lưỡi vừa mọi cỡ cá */
+  hook?: Hook
 }
 
 /** Ổ mồi xả nhạt dần: sau ngần này thời gian còn một nửa. */
@@ -99,9 +101,19 @@ export function shyFactor(s: Species, line: Line): number {
   return s.typicalG < 1000 ? line.shyFactor : 1
 }
 
+/** Cá nhỏ hơn cỡ lưỡi nhiều thì ngậm không trọn, ít ăn hơn: còn 0.4 khi nhỏ hơn 4 lần trở xuống. Cá to hơn không ngại lưỡi nhỏ. */
+export const HOOK_SMALL_FISH_MIN = 0.4
+export function hookFactor(s: Species, hook?: Hook): number {
+  if (!hook) return 1
+  const lo = hook.bestForG[0]
+  if (s.typicalG >= lo) return 1
+  const far = Math.min(1, Math.log(lo / s.typicalG) / Math.log(4))
+  return 1 - (1 - HOOK_SMALL_FISH_MIN) * far
+}
+
 export function speciesWeight(s: Species, base: number, hourF: number, loc: Location, setup: Setup): number {
   const bait = setup.bait ? 0.3 + 1.7 * baitMatch(s, setup.bait) ** 2 : 0.15
-  return base * hourF * bait * tempFactor(s, setup.waterTempC) * layerFactor(s, baitOffsetCm(loc, setup)) * shyFactor(s, setup.line)
+  return base * hourF * bait * tempFactor(s, setup.waterTempC) * layerFactor(s, baitOffsetCm(loc, setup)) * shyFactor(s, setup.line) * hookFactor(s, setup.hook)
 }
 
 /**

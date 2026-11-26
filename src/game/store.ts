@@ -514,7 +514,7 @@ async function saveCatch(g: GameState) {
     waterTempC: session.weather.waterTempC,
     depthCm: player.depthCm[session.locationId],
     bait: player.bowl ? { label: player.bowl.label, ...player.bowl.axes } : {},
-    rig: { rig: player.equipped.rig, float: player.equipped.float, line: player.equipped.line, rod: player.equipped.rod },
+    rig: { rig: player.equipped.rig, float: player.equipped.float, line: player.equipped.line, rod: player.equipped.rod, hook: player.equipped.hook },
     fate: 'kept',
   }
   const firstEver = st.handbook.length === 0

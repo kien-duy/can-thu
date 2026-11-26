@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AXES, AXIS_LABEL, BAIT, floatOf, GEAR, ingredientOf, lineOf, rodOf, speciesOf } from '../content'
+import { AXES, AXIS_LABEL, BAIT, floatOf, GEAR, hookOf, ingredientOf, lineOf, rodOf, speciesOf } from '../content'
 import * as P from '../game/player'
 import { useGame } from '../game/store'
 import { baitMatch, baitOffsetCm, mixAxes, signalScale, UNSOUNDED_SHORT_CM } from '../sim/setup'
@@ -199,10 +199,12 @@ function GearTab() {
   const rod = rodOf(player.equipped.rod)
   const line = lineOf(player.equipped.line)
   const fl = floatOf(player.equipped.float)
+  const hook = hookOf(player.equipped.hook)
   const groups = [
     { kind: 'rods' as const, title: 'Cần', items: GEAR.rods, cur: rod.id },
     { kind: 'lines' as const, title: 'Dây', items: GEAR.lines, cur: line.id },
     { kind: 'floats' as const, title: 'Phao', items: GEAR.floats, cur: fl.id },
+    { kind: 'hooks' as const, title: 'Lưỡi', items: GEAR.hooks, cur: hook.id },
   ]
   return (
     <div className="stack">

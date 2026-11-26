@@ -18,6 +18,7 @@ export function Shop() {
     { kind: 'rods' as const, title: 'Cần', items: GEAR.rods },
     { kind: 'lines' as const, title: 'Dây', items: GEAR.lines },
     { kind: 'floats' as const, title: 'Phao', items: GEAR.floats },
+    { kind: 'hooks' as const, title: 'Lưỡi', items: GEAR.hooks },
   ]
   return (
     <Sheet title="Cửa hàng" aside={<span data-testid="shop-coins">{xu(player.coins)}</span>}>
