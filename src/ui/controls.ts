@@ -28,11 +28,28 @@ export function primaryUp() {
   if (game.phase === 'fighting' || game.phase === 'landable') dispatch({ type: 'reel', t, on: false })
 }
 
+/** Dòng cá: nghiêng cần sang trái (-1), phải (1) hoặc về thẳng (0). Ngoài trận kéo thì không có tác dụng. */
+export function steer(side: -1 | 0 | 1) {
+  useGame.getState().dispatch({ type: 'steer', t: Date.now(), side })
+}
+
+const STEER_KEYS: Record<string, -1 | 1> = { KeyA: -1, ArrowLeft: -1, KeyD: 1, ArrowRight: 1 }
+
 export function useKeyboard() {
   useEffect(() => {
     const isTyping = (e: KeyboardEvent) => e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement
+    // các phím dòng đang giữ, phím bấm sau cùng thắng; nhả ra thì quay về phím còn giữ, hoặc về thẳng
+    const held: (-1 | 1)[] = []
+    const steerHeld = () => steer(held[held.length - 1] ?? 0)
     const down = (e: KeyboardEvent) => {
       if (isTyping(e) || e.repeat) return
+      const side = STEER_KEYS[e.code]
+      if (side) {
+        const phase = useGame.getState().game.phase
+        if (phase === 'fighting' || phase === 'landable') e.preventDefault()
+        held.push(side)
+        steerHeld()
+      }
       if (e.code === 'Space') {
         e.preventDefault()
         primaryDown()
@@ -45,12 +62,26 @@ export function useKeyboard() {
         e.preventDefault()
         primaryUp()
       }
+      const side = STEER_KEYS[e.code]
+      if (side) {
+        const i = held.lastIndexOf(side)
+        if (i >= 0) held.splice(i, 1)
+        steerHeld()
+      }
+    }
+    // rời cửa sổ giữa chừng thì không nhận được keyup: coi như buông hết phím dòng
+    const blur = () => {
+      if (held.length === 0) return
+      held.length = 0
+      steer(0)
     }
     window.addEventListener('keydown', down)
     window.addEventListener('keyup', up)
+    window.addEventListener('blur', blur)
     return () => {
       window.removeEventListener('keydown', down)
       window.removeEventListener('keyup', up)
+      window.removeEventListener('blur', blur)
     }
   }, [])
 }

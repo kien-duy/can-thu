@@ -35,7 +35,7 @@ export function actionFor(s: GameState, t: number, ctx: HintContext = { hasBait:
     case 'fighting':
       return {
         label: s.reeling ? 'Đang ghì' : 'Giữ để ghì',
-        hint: (s.fight?.tension ?? 0) > 0.8 ? 'Dây căng quá, thả tay ra!' : 'Giữ để thu dây, thả khi dây căng đỏ.',
+        hint: fightHint(s),
         mode: 'hold',
         urgent: (s.fight?.tension ?? 0) > 0.8,
       }
@@ -44,6 +44,14 @@ export function actionFor(s: GameState, t: number, ctx: HintContext = { hasBait:
     case 'result':
       return { label: 'Câu tiếp', hint: resultText(s), mode: 'tap' }
   }
+}
+
+function fightHint(s: GameState): string {
+  const f = s.fight
+  if ((f?.tension ?? 0) > 0.8) return 'Dây căng quá, thả tay ra!'
+  if (f?.fishDir === -1) return f.rodSide === 1 ? 'Cá chạy trái, cần đang dòng phải. Đúng bài, cá sẽ đuối nhanh.' : 'Cá chạy sang trái. Dòng cần ngược hướng cá chạy: giữ D hoặc ▶.'
+  if (f?.fishDir === 1) return f.rodSide === -1 ? 'Cá chạy phải, cần đang dòng trái. Đúng bài, cá sẽ đuối nhanh.' : 'Cá chạy sang phải. Dòng cần ngược hướng cá chạy: giữ A hoặc ◀.'
+  return 'Giữ để thu dây, thả khi dây căng đỏ. Cá chạy ngang thì dòng cần ngược hướng cá chạy.'
 }
 
 function resultText(s: GameState): string {

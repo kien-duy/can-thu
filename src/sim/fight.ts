@@ -3,6 +3,7 @@ import { rngStep } from './rng'
 
 /**
  * Kéo cá: giữ = ghì (thu dây), thả = tay mềm (cần tự đỡ, cá lấy dây).
+ * Dòng cá: cá vật thì chạy sang một bên; dòng cần ngược phía cá chạy là đúng bài, cùng phía là thiệt.
  * Trạng thái thuần, bước thời gian cố định, nên test chạy được hàng nghìn ván.
  */
 export interface FightState {
@@ -26,6 +27,12 @@ export interface FightState {
   strength: number
   /** dây đã quá tải liên tục bao lâu (ms); cần đỡ sốc được một nhịp, quá OVERLOAD_MS mới đứt */
   overloadMs: number
+  /** cá đang chạy về phía nào: -1 trái, 1 phải, 0 ghì thẳng ra xa */
+  fishDir: -1 | 0 | 1
+  /** người chơi đang dòng cần sang phía nào (-1 trái, 1 phải, 0 giữ thẳng) */
+  rodSide: -1 | 0 | 1
+  /** chuỗi RNG riêng cho hướng cá chạy, để không xáo nhịp vật vốn có */
+  dirRng: number
 }
 
 export type FightOutcome = 'fighting' | 'landable' | 'broke' | 'escaped'
@@ -36,6 +43,12 @@ export const ESCAPE_DISTANCE_M = 25
 export const STEP_MS = 50
 /** Cần đỡ sốc: dây phải quá tải liên tục ngần này mới đứt. Lớn hơn phản xạ người (~250 ms) để kịp thả tay. */
 export const OVERLOAD_MS = 400
+/** Dòng cần ngược hướng cá chạy: cá mất sức nhanh hơn, lấy được ít dây hơn. */
+export const STEER_GOOD_STAMINA = 1.6
+export const STEER_GOOD_LINE = 0.6
+/** Dòng cần cùng hướng cá chạy: dây căng thêm, cá lấy thêm dây. */
+export const STEER_BAD_TENSION = 0.15
+export const STEER_BAD_LINE = 1.3
 
 export function initFight(s: Species, weightG: number, distanceM: number, seed: number, strength = 1): FightState {
   const size = Math.min(2.2, Math.max(0.4, weightG / s.typicalG))
@@ -56,33 +69,54 @@ export function initFight(s: Species, weightG: number, distanceM: number, seed: 
     surge: s.fight.surge,
     strength,
     overloadMs: 0,
+    fishDir: 0,
+    rodSide: 0,
+    dirRng: (seed ^ 0x5bd1e995) >>> 0,
   }
+}
+
+/** +1 khi dòng cần ngược hướng cá chạy (đúng bài), -1 khi dòng cùng hướng, 0 khi không ảnh hưởng. */
+export function steerEffect(f: Pick<FightState, 'fishDir' | 'rodSide'>): -1 | 0 | 1 {
+  if (f.fishDir === 0 || f.rodSide === 0) return 0
+  return f.rodSide === -f.fishDir ? 1 : -1
 }
 
 function step(f: FightState, reeling: boolean): FightState {
   const dt = STEP_MS / 1000
-  let { rng, surgeUntil, nextSurgeAt } = f
+  let { rng, surgeUntil, nextSurgeAt, fishDir, dirRng } = f
   const elapsedMs = f.elapsedMs + STEP_MS
+  const wasSurging = f.elapsedMs < f.surgeUntil
   if (elapsedMs >= nextSurgeAt) {
     let a: number, b: number
     ;[a, rng] = rngStep(rng)
     ;[b, rng] = rngStep(rng)
     surgeUntil = elapsedMs + 700 + a * 900
     nextSurgeAt = surgeUntil + 1800 + b * 3200
+    // mỗi lần vật, cá chọn một phía để chạy
+    let d: number
+    ;[d, dirRng] = rngStep(dirRng)
+    fishDir = d < 0.5 ? -1 : 1
   }
   const surging = elapsedMs < surgeUntil
+  if (wasSurging && !surging) {
+    // vật xong, chừng một nửa số lần cá quay về ghì thẳng, còn lại chạy tiếp phía cũ
+    let k: number
+    ;[k, dirRng] = rngStep(dirRng)
+    if (k < 0.5) fishDir = 0
+  }
+  const steer = steerEffect({ fishDir, rodSide: f.rodSide })
   const pull = f.power * (0.35 + 0.65 * f.stamina) * (surging ? 1 + f.surge * 1.5 : 1)
   // độ căng hiển thị = lực trên dây ÷ sức chịu của bộ đồ (1 = sắp đứt)
-  const target = (reeling ? pull + 0.45 : pull * 0.35) / f.strength
+  const target = (reeling ? pull + 0.45 : pull * 0.35) / f.strength + (steer < 0 ? STEER_BAD_TENSION : 0)
   // thả tay ("tay mềm") thì ngọn cần chùng ngay, lực tụt nhanh hơn lúc ghì lên
   const tension = f.tension + (target - f.tension) * Math.min(1, dt * (reeling ? 4 : 10))
   let distanceM = f.distanceM
   if (reeling && tension < 0.95) distanceM -= 1.6 * (1 - 0.8 * pull) * dt
-  if (!reeling) distanceM += pull * 1.2 * dt
+  if (!reeling) distanceM += pull * 1.2 * dt * (steer > 0 ? STEER_GOOD_LINE : steer < 0 ? STEER_BAD_LINE : 1)
   distanceM = Math.max(0.5, distanceM)
-  const stamina = Math.max(0, f.stamina - (dt * (0.008 + 0.055 * tension)) / f.staminaScale)
+  const stamina = Math.max(0, f.stamina - ((dt * (0.008 + 0.055 * tension)) / f.staminaScale) * (steer > 0 ? STEER_GOOD_STAMINA : 1))
   const overloadMs = tension >= 1 ? f.overloadMs + STEP_MS : 0
-  return { ...f, rng, surgeUntil, nextSurgeAt, elapsedMs, pull, tension, distanceM, stamina, overloadMs }
+  return { ...f, rng, surgeUntil, nextSurgeAt, elapsedMs, pull, tension, distanceM, stamina, overloadMs, fishDir, dirRng }
 }
 
 export function outcomeOf(f: FightState): FightOutcome {

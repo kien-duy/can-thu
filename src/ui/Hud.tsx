@@ -3,7 +3,7 @@ import { chumLevel, levelOf } from '../game/player'
 import { kg, useGame } from '../game/store'
 import { chargePower } from '../sim/game'
 import { clockLabel, dayPart, localHour, WEATHER_LABEL } from '../sim/world'
-import { primaryDown, primaryUp } from './controls'
+import { primaryDown, primaryUp, steer } from './controls'
 import { xu } from './Sheet'
 import { shiftRemaining } from './Shift'
 
@@ -81,7 +81,7 @@ export function ActionBar() {
       </button>
       <div className="action__secondary">
         <span className="muted small">
-          {bowl ? `Mồi: ${bowl.label}, còn ${bowl.uses} lần móc` : 'Hết mồi'} · Ổ: {chum < 0.05 ? 'chưa có' : `${Math.round(chum * 100)}%`} · Space · Vớt: E
+          {bowl ? `Mồi: ${bowl.label}, còn ${bowl.uses} lần móc` : 'Hết mồi'} · Ổ: {chum < 0.05 ? 'chưa có' : `${Math.round(chum * 100)}%`} · Space · Dòng: A/D · Vớt: E
         </span>
         {canChum && (
           <button type="button" className="ghost ghost--small" data-testid="chum" onClick={() => useGame.getState().throwChum()} title="Ném một nắm mồi xả (tốn 3 lần móc) để gom cá về ổ">
@@ -100,7 +100,43 @@ function FightBars() {
       <Meter label="Sức cá" value={f.stamina} tone="leaf" />
       <Meter label="Độ căng dây" value={f.tension} tone={f.tension > 0.8 ? 'alert' : 'primary'} />
       <div className="muted small">Cách bờ {f.distanceM.toFixed(1)} m</div>
+      <div className="fight__steer">
+        <SteerButton side={-1} active={f.rodSide === -1} />
+        <span className="fight__dir small" data-testid="fish-dir">
+          {FISH_DIR_LABEL[f.fishDir]}
+        </span>
+        <SteerButton side={1} active={f.rodSide === 1} />
+      </div>
     </div>
+  )
+}
+
+const FISH_DIR_LABEL = { [-1]: 'Cá chạy sang trái ←', 0: 'Cá đang ghì thẳng', 1: 'Cá chạy sang phải →' } as const
+
+/** Nút dòng cá: giữ để nghiêng cần, nhả ra cần về thẳng. */
+function SteerButton({ side, active }: { side: -1 | 1; active: boolean }) {
+  const release = () => steer(0)
+  return (
+    <button
+      type="button"
+      className={`ghost fight__steer-btn${active ? ' is-active' : ''}`}
+      data-testid={side < 0 ? 'steer-left' : 'steer-right'}
+      aria-label={side < 0 ? 'Dòng cá sang trái' : 'Dòng cá sang phải'}
+      aria-pressed={active}
+      onPointerDown={(e) => {
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId)
+        } catch {
+          /* thiết bị không hỗ trợ */
+        }
+        steer(side)
+      }}
+      onPointerUp={release}
+      onPointerCancel={release}
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      {side < 0 ? '◀' : '▶'}
+    </button>
   )
 }
 

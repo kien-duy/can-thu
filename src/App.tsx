@@ -29,6 +29,7 @@ export function App() {
   const phase = useGame((s) => s.game.phase)
   const wait = useGame((s) => waitStatus(s.game, s.now))
   const tension = useGame((s) => s.game.fight?.tension ?? 0)
+  const fishDir = useGame((s) => s.game.fight?.fishDir ?? 0)
   const repoKind = useGame((s) => s.repo.kind)
   const panel = useGame((s) => s.panel)
   const booted = useGame((s) => s.booted)
@@ -51,6 +52,7 @@ export function App() {
       data-phase={phase}
       data-wait={wait ?? ''}
       data-tension={tension.toFixed(2)}
+      data-fish-dir={fishDir}
       data-repo={repoKind}
       data-shift={!booted ? 'loading' : shiftOver ? 'over' : inShift ? 'on' : 'none'}
     >
