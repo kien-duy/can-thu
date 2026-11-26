@@ -2,7 +2,7 @@
 
 Game câu đài 3D trên web cho người vừa làm việc vừa muốn câu. Bạn thả câu rồi quay lại làm việc; khi cá bắt đầu rỉa mồi, game báo cho bạn quay lại.
 
-Trạng thái: **M2**. Vào ca ở Hồ Đồng Xanh (vé 1, 2 hoặc 4 tiếng theo giờ thật), dò đáy, chọn kiểu cân, trộn mồi theo bài gợi ý hoặc tự trộn, quăng, đọc phao, giật, kéo, vớt. Hết ca thì bán cá theo kg hoặc thả lại hồ. Có cửa hàng (cần, dây, phao, nguyên liệu mồi), cấp độ, sổ tay 8 loài kèm nhật ký câu, liên kết tài khoản, xoá tài khoản. Khi tab ẩn: tiêu đề tab đổi, có tiếng báo, và thông báo hệ thống nếu bạn cho phép (game hỏi sau con cá đầu tiên).
+Trạng thái: **M3**. Có 3 nơi câu: Hồ Đồng Xanh (hồ dịch vụ, vé theo giờ thật), Bến sông làng (mở ở cấp 2) và Hồ núi Mây (mở ở cấp 4). Sông và hồ núi câu tự do, cá bán cho lái cá với giá thấp hơn. 15 loài cá có đặc tính đời thật. Mồi rã dần trong nước; có thể xả mồi mở ổ để gom cá. Cảnh 3D low-poly riêng cho từng nơi: nước dùng shader, trời và trăng sao theo giờ thật, camera tự lại gần phao khi cá rỉa, có góc rộng toàn cảnh. 10 loài sinh vật ghé bờ nước theo địa điểm, giờ và thời tiết. Sổ tay gồm các loài, nhật ký câu, kho nhịp phao để tập giật, và sinh vật đã gặp. Có nhiệm vụ ngày, chế độ nhìn xuyên nước, cài đặt chất lượng đồ hoạ, cỡ khung phao và âm thanh.
 
 Mồi, độ sâu, kiểu cân, nhiệt độ nước, giờ trong ngày, dây và phao đều ảnh hưởng loài nào cắn, bao lâu cá tới và phao báo to hay nhỏ (`src/sim/setup.ts`).
 
@@ -37,7 +37,7 @@ Sửa `content/*.json` thì chạy `npm run seed:gen` để sinh lại `supabase
 
 | thư mục | nội dung |
 | --- | --- |
-| `content/` | dữ liệu game: loài, địa điểm, mồi, đồ nghề, kiểu cân (kiểm tra bằng zod) |
+| `content/` | dữ liệu game: loài, địa điểm, mồi, đồ nghề, kiểu cân, sinh vật, nhiệm vụ (kiểm tra bằng zod) |
 | `src/sim/` | lõi mô phỏng, TypeScript thuần, tất định: phao, cá cắn, kéo cá, đồng hồ, thời tiết |
 | `src/data/` | `GameRepository`: bản lưu trên máy, bản Supabase, hàng đợi offline |
 | `src/game/` | tiến độ người chơi (xu, xp, túi đồ, mồi) dạng hàm thuần; store Zustand |

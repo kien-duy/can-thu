@@ -42,6 +42,7 @@ export type Result =
   | { kind: 'too_early'; speciesId: string }
   | { kind: 'too_late'; speciesId: string }
   | { kind: 'gone'; speciesId: string }
+  | { kind: 'bait_gone' }
   | { kind: 'broke'; speciesId: string; weightG: number }
   | { kind: 'escaped'; speciesId: string }
 
@@ -156,7 +157,10 @@ export function reduce(cfg: GameConfig, s: GameState, e: GameEvent): GameState {
 
 function tick(_cfg: GameConfig, s: GameState, t: number, paused: boolean): GameState {
   if (s.phase === 'sinking' && t >= s.cast!.settledAt) s = { ...s, phase: 'waiting' }
-  if (s.phase === 'waiting' && t > s.bite!.strikeClose + LEAVE_AFTER_MS) {
+  if (s.phase === 'waiting' && s.bite!.empty && t > s.bite!.dissolveAt) {
+    return { ...s, phase: 'result', result: { kind: 'bait_gone' }, lastTick: t }
+  }
+  if (s.phase === 'waiting' && !s.bite!.empty && t > s.bite!.strikeClose + LEAVE_AFTER_MS) {
     return { ...s, phase: 'result', result: { kind: 'gone', speciesId: s.bite!.speciesId }, lastTick: t }
   }
   if ((s.phase === 'fighting' || s.phase === 'landable') && s.fight) {
@@ -188,7 +192,7 @@ export type WaitStatus = 'settling' | 'quiet' | 'nibbling' | 'window' | 'after'
 export function waitStatus(s: GameState, t: number): WaitStatus | undefined {
   if (s.phase === 'sinking') return 'settling'
   if (s.phase !== 'waiting' || !s.bite) return undefined
-  if (t < s.bite.nibbleStart) return 'quiet'
+  if (s.bite.empty || t < s.bite.nibbleStart) return 'quiet'
   if (t < s.bite.strikeOpen) return 'nibbling'
   if (t <= s.bite.strikeClose) return 'window'
   return 'after'

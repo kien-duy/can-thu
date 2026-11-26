@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test'
  * M1 "done": từ lúc mở game tới lúc có một dòng trong sổ tay.
  * ?fast=1 thu nhỏ thời gian chờ; ?seed cố định loài và nhịp; ?store=local để không cần Supabase.
  */
-import { app, castLine, enterShift, fightUntilLandable } from './helpers'
+import { app, castLine, enterShift, fightUntilLandable, strikeOnWindow } from './helpers'
 
 test('câu được con cá đầu tiên và thấy nó trong sổ tay', async ({ page }, info) => {
   test.setTimeout(90_000)
@@ -15,9 +15,7 @@ test('câu được con cá đầu tiên và thấy nó trong sổ tay', async (
   await castLine(page)
   await expect(app(page)).toHaveAttribute('data-wait', 'nibbling', { timeout: 20_000 })
   await page.screenshot({ path: info.outputPath('02-nibbling.png') })
-  await expect(app(page)).toHaveAttribute('data-wait', 'window', { timeout: 20_000 })
-  await page.keyboard.press('Space')
-  await expect(app(page)).toHaveAttribute('data-phase', 'fighting')
+  await strikeOnWindow(page)
   await page.screenshot({ path: info.outputPath('03-fighting.png') })
 
   await fightUntilLandable(page)

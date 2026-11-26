@@ -1,0 +1,102 @@
+[
+  {
+    "id": "buom_vang",
+    "nameVi": "Bướm vàng",
+    "visual": "butterfly",
+    "locations": ["ho_dong_xanh", "ben_song_lang", "ho_nui_may"],
+    "hours": [7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+    "weathers": ["sunny", "cloudy"],
+    "weight": 4,
+    "note": "Bướm cải, bướm vàng chanh hay bay ven bờ những ngày nắng ráo, tìm hoa dại ven ruộng."
+  },
+  {
+    "id": "chuon_chuon_ot",
+    "nameVi": "Chuồn chuồn ớt",
+    "visual": "dragonfly",
+    "locations": ["ho_dong_xanh", "ben_song_lang", "ho_nui_may"],
+    "hours": [8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+    "weathers": ["sunny", "cloudy"],
+    "weight": 4,
+    "note": "Chuồn chuồn đỏ hay đậu lên ngọn cần, đầu phao. Ấu trùng của chúng sống dưới nước nên có chuồn chuồn là nước còn sạch."
+  },
+  {
+    "id": "dom_dom",
+    "nameVi": "Đom đóm",
+    "visual": "firefly",
+    "locations": ["ben_song_lang", "ho_nui_may", "ho_dong_xanh"],
+    "hours": [19, 20, 21, 22, 23],
+    "weathers": ["sunny", "cloudy"],
+    "weight": 5,
+    "note": "Đom đóm phát sáng bằng phản ứng hoá học trong bụng để tìm bạn đời. Chỉ còn nhiều ở nơi ít đèn, ít thuốc trừ sâu."
+  },
+  {
+    "id": "co_trang",
+    "nameVi": "Cò trắng",
+    "visual": "bird",
+    "locations": ["ben_song_lang", "ho_dong_xanh"],
+    "hours": [6, 7, 8, 9, 16, 17, 18],
+    "weathers": ["sunny", "cloudy", "fog"],
+    "weight": 3,
+    "note": "Cò lội ruộng, ven sông bắt cá con, tép, ếch nhái. Chiều về hay bay thành hàng về tổ trên rặng tre."
+  },
+  {
+    "id": "boi_ca",
+    "nameVi": "Bói cá",
+    "visual": "kingfisher",
+    "locations": ["ben_song_lang", "ho_nui_may"],
+    "hours": [6, 7, 8, 9, 10, 15, 16, 17],
+    "weathers": ["sunny", "cloudy"],
+    "weight": 2,
+    "note": "Chim nhỏ lông xanh biếc, đậu cành cây sát nước rồi lao thẳng xuống bắt cá con. Thấy bói cá lao là có đàn cá nhỏ gần đó."
+  },
+  {
+    "id": "trau",
+    "nameVi": "Trâu",
+    "visual": "buffalo",
+    "locations": ["ben_song_lang"],
+    "hours": [10, 11, 12, 13, 14, 15, 16, 17],
+    "weathers": ["sunny", "cloudy"],
+    "weight": 1.5,
+    "note": "Trưa nắng trâu xuống bãi sông uống nước, đầm mình cho mát. Trâu không có nhiều tuyến mồ hôi nên rất cần ngâm nước."
+  },
+  {
+    "id": "vit_troi",
+    "nameVi": "Vịt trời",
+    "visual": "duck",
+    "locations": ["ho_nui_may", "ben_song_lang"],
+    "hours": [6, 7, 8, 16, 17, 18],
+    "weathers": ["sunny", "cloudy", "fog", "rain"],
+    "weight": 2,
+    "note": "Vịt trời di cư về các hồ lớn vào mùa đông, hay bơi thành đàn ở chỗ nước lặng xa bờ."
+  },
+  {
+    "id": "nai",
+    "nameVi": "Nai",
+    "visual": "deer",
+    "locations": ["ho_nui_may"],
+    "hours": [5, 6, 7, 17, 18, 19],
+    "weathers": ["sunny", "cloudy", "fog"],
+    "weight": 1,
+    "note": "Nai ra bờ hồ uống nước lúc sáng sớm và chiều tối, khi người còn ít. Rất nhát, nghe động là chạy vào rừng."
+  },
+  {
+    "id": "khi",
+    "nameVi": "Khỉ",
+    "visual": "monkey",
+    "locations": ["ho_nui_may"],
+    "hours": [8, 9, 10, 11, 14, 15, 16],
+    "weathers": ["sunny", "cloudy"],
+    "weight": 1,
+    "note": "Đàn khỉ xuống mép nước uống, nghịch ngợm trên cành cây sát hồ. Đừng cho khỉ ăn: chúng quen người sẽ giật đồ."
+  },
+  {
+    "id": "ech_com",
+    "nameVi": "Ếch cốm",
+    "visual": "frog",
+    "locations": ["ho_dong_xanh", "ben_song_lang"],
+    "hours": [18, 19, 20, 21, 22, 5, 6],
+    "weathers": ["rain", "cloudy", "fog"],
+    "weight": 2,
+    "note": "Sau mưa ếch nhái kêu ran ven bờ. Nhảy tõm xuống nước cạnh phao làm cá giật mình."
+  }
+]

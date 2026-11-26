@@ -20,6 +20,24 @@ export interface Setup {
   /** sức chịu của bộ cần + dây; trận kéo đứt khi lực vượt mức này */
   strength: number
   castBonusM: number
+  /** độ đậm của ổ mồi xả ở chỗ đang câu, 0..1 (đã tính phân rã theo thời gian) */
+  chum?: number
+}
+
+/** Ổ mồi xả nhạt dần: sau ngần này thời gian còn một nửa. */
+export const CHUM_HALF_LIFE_MS = 10 * 60_000
+/** Mỗi nắm mồi xả làm ổ đậm thêm ngần này (tối đa 1). */
+export const CHUM_PER_THROW = 0.35
+export const CHUM_USES = 3
+
+export function chumNow(level: number, at: number, t: number, halfLifeMs = CHUM_HALF_LIFE_MS): number {
+  return level * 0.5 ** (Math.max(0, t - at) / halfLifeMs)
+}
+
+/** Mồi trên lưỡi rã sau bao lâu trong nước (ms, chưa nhân timeScale): mồi càng tơi rã càng nhanh. */
+export function dissolveMs(bait: Axes | null): number {
+  if (!bait) return 60_000
+  return (240 - 120 * bait.loose) * 1000
 }
 
 /** Độ sâu mặc định khi chưa dò đáy: treo ngắn hơn đáy 30 cm, tức đang câu lửng mà không biết. */
@@ -92,7 +110,8 @@ export function signalScale(loc: Location, setup: Setup): number {
 }
 
 /** Hệ số nhân thời gian chờ: mồi hợp và đúng tầng thì cá tới nhanh hơn. */
-export function waitFactor(attractiveness: number, hasBait: boolean): number {
+export function waitFactor(attractiveness: number, hasBait: boolean, chum = 0): number {
   if (!hasBait) return 3
-  return Math.min(2.5, Math.max(0.55, 1 / Math.max(0.01, attractiveness)))
+  // ổ đậm giữ đàn cá quanh chỗ câu: cá tới nhanh hơn, tối đa nhanh gấp đôi
+  return Math.min(2.5, Math.max(0.3, (1 / Math.max(0.01, attractiveness)) * (1 - 0.5 * Math.min(1, chum))))
 }

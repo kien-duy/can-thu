@@ -5,22 +5,166 @@
     "kind": "fee_pond",
     "summary": "Hồ dịch vụ nhỏ ven làng, nước sâu chừng 1,8 m. Thả chủ yếu rô phi và điêu hồng, có thêm chép, diếc, trôi, chim trắng; thỉnh thoảng có trắm cỏ và mè hoa lớn.",
     "bottomDepthCm": 180,
-    "castDistanceM": [5, 9],
-    "waitSec": [20, 90],
+    "castDistanceM": [
+      5,
+      9
+    ],
+    "waitSec": [
+      20,
+      90
+    ],
     "tickets": [
-      { "hours": 1, "priceXu": 60 },
-      { "hours": 2, "priceXu": 100 },
-      { "hours": 4, "priceXu": 180 }
+      {
+        "hours": 1,
+        "priceXu": 60
+      },
+      {
+        "hours": 2,
+        "priceXu": 100
+      },
+      {
+        "hours": 4,
+        "priceXu": 180
+      }
     ],
     "species": [
-      { "id": "ro_phi_den", "weight": 6 },
-      { "id": "dieu_hong", "weight": 3 },
-      { "id": "chep", "weight": 1.2 },
-      { "id": "diec", "weight": 1.5 },
-      { "id": "troi", "weight": 1.5 },
-      { "id": "chim_trang", "weight": 1 },
-      { "id": "tram_co", "weight": 0.5 },
-      { "id": "me_hoa", "weight": 0.5 }
+      {
+        "id": "ro_phi_den",
+        "weight": 6
+      },
+      {
+        "id": "dieu_hong",
+        "weight": 3
+      },
+      {
+        "id": "chep",
+        "weight": 1.2
+      },
+      {
+        "id": "diec",
+        "weight": 1.5
+      },
+      {
+        "id": "troi",
+        "weight": 1.5
+      },
+      {
+        "id": "chim_trang",
+        "weight": 1
+      },
+      {
+        "id": "tram_co",
+        "weight": 0.5
+      },
+      {
+        "id": "me_hoa",
+        "weight": 0.5
+      }
+    ],
+    "minLevel": 1,
+    "saleFactor": 1.0,
+    "theme": "fee_pond"
+  },
+  {
+    "id": "ben_song_lang",
+    "nameVi": "Bến sông làng",
+    "kind": "river",
+    "minLevel": 2,
+    "saleFactor": 0.7,
+    "theme": "river",
+    "summary": "Khúc sông hiền chảy qua làng, bờ tre, bãi cỏ trâu ra uống nước. Không mất vé, câu bao lâu tuỳ thích; cá bán cho lái cá ở chợ giá thấp hơn hồ dịch vụ. Lăng, ngạnh ăn về đêm.",
+    "bottomDepthCm": 240,
+    "castDistanceM": [
+      6,
+      11
+    ],
+    "waitSec": [
+      30,
+      120
+    ],
+    "tickets": [],
+    "species": [
+      {
+        "id": "muong",
+        "weight": 5
+      },
+      {
+        "id": "ro_dong",
+        "weight": 2
+      },
+      {
+        "id": "chay_mat_do",
+        "weight": 2
+      },
+      {
+        "id": "diec",
+        "weight": 2
+      },
+      {
+        "id": "troi",
+        "weight": 1.5
+      },
+      {
+        "id": "chep",
+        "weight": 1
+      },
+      {
+        "id": "nganh",
+        "weight": 1.2
+      },
+      {
+        "id": "lang",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "id": "ho_nui_may",
+    "nameVi": "Hồ núi Mây",
+    "kind": "mountain_lake",
+    "minLevel": 4,
+    "saleFactor": 0.7,
+    "theme": "mountain",
+    "summary": "Hồ chứa giữa thung núi, nước sâu và trong, sáng sớm sương phủ. Cá ít nhưng to: trắm đen, mè, chép lớn. Không mất vé.",
+    "bottomDepthCm": 420,
+    "castDistanceM": [
+      7,
+      13
+    ],
+    "waitSec": [
+      45,
+      160
+    ],
+    "tickets": [],
+    "species": [
+      {
+        "id": "me_trang",
+        "weight": 3
+      },
+      {
+        "id": "chep",
+        "weight": 2
+      },
+      {
+        "id": "diec",
+        "weight": 2
+      },
+      {
+        "id": "tram_co",
+        "weight": 1.5
+      },
+      {
+        "id": "me_hoa",
+        "weight": 1.5
+      },
+      {
+        "id": "tram_den",
+        "weight": 0.8
+      },
+      {
+        "id": "lang",
+        "weight": 0.5
+      }
     ]
   }
 ]

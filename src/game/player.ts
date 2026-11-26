@@ -5,7 +5,8 @@
  */
 import { z } from 'zod'
 import { BAIT, floatOf, GEAR, ingredientOf, type Location, lineOf, rigOf, rodOf, speciesOf } from '../content'
-import { mixAxes, type Setup } from '../sim/setup'
+import { CHUM_PER_THROW, CHUM_USES, chumNow, mixAxes, type Setup } from '../sim/setup'
+import { type Quest, type QuestState, rollover } from './quests'
 
 export const STATE_SCHEMA_VERSION = 1
 export const START_COINS = 500
@@ -22,6 +23,9 @@ export const PlayerStateSchema = z.object({
   stock: z.record(z.string(), z.number().int().nonnegative()),
   bowl: z.object({ axes: AxesZ, uses: z.number().int().nonnegative(), label: z.string() }).nullable(),
   notifyAsked: z.boolean(),
+  /** ổ mồi xả theo địa điểm: độ đậm lúc xả gần nhất và thời điểm đó (ms) */
+  chum: z.record(z.string(), z.object({ level: z.number(), at: z.number() })),
+  quests: z.object({ date: z.string(), progress: z.record(z.string(), z.number()), claimed: z.array(z.string()) }),
 })
 export type PlayerState = z.infer<typeof PlayerStateSchema>
 
@@ -42,6 +46,8 @@ export function newPlayer(): PlayerState {
     // chậu mồi rô phi trộn sẵn: người mới vào là câu được ngay
     bowl: { axes: mixAxes(first.scoops), uses: BAIT.usesPerBowl, label: first.nameVi },
     notifyAsked: false,
+    chum: {},
+    quests: { date: '', progress: {}, claimed: [] },
   }
 }
 
@@ -80,6 +86,7 @@ export function buyGear(p: PlayerState, kind: Kind, id: string): Op {
   const item = catalog[kind].find((x) => x.id === id)
   if (!item) return fail('Không có món này.')
   if (p.owned[kind].includes(id)) return fail('Đã có rồi.')
+  if (levelOf(p.xp) < item.minLevel) return fail(`Cần đạt cấp ${item.minLevel} mới mua được.`)
   if (p.coins < item.priceXu) return fail(`Thiếu ${item.priceXu - p.coins} xu.`)
   return ok({
     ...p,
@@ -142,7 +149,43 @@ export function setRig(p: PlayerState, loc: Location, rigId: string): PlayerStat
   return { ...next, depthCm: { ...p.depthCm, [loc.id]: p.depthCm[loc.id]! + delta } }
 }
 
-export function setupFor(p: PlayerState, loc: Location, waterTempC: number): Setup {
+// ---------------------------------------------------------------- mồi xả, ổ
+
+export function chumLevel(p: PlayerState, locId: string, t: number): number {
+  const c = p.chum[locId]
+  return c ? chumNow(c.level, c.at, t) : 0
+}
+
+/** Ném một nắm mồi xả mở ổ: tốn vài viên trong chậu, ổ đậm thêm (tối đa 1). */
+export function throwChum(p: PlayerState, locId: string, t: number): Op {
+  if (!p.bowl || p.bowl.uses < CHUM_USES) return fail('Chậu mồi không đủ để xả. Trộn chậu mới đã.')
+  const level = Math.min(1, chumLevel(p, locId, t) + CHUM_PER_THROW)
+  const uses = p.bowl.uses - CHUM_USES
+  return ok({ ...p, bowl: uses > 0 ? { ...p.bowl, uses } : null, chum: { ...p.chum, [locId]: { level, at: t } } })
+}
+
+export function canFishAt(p: PlayerState, loc: Location): boolean {
+  return levelOf(p.xp) >= loc.minLevel
+}
+
+// ---------------------------------------------------------------- nhiệm vụ
+
+export function questsToday(p: PlayerState, date: string): PlayerState {
+  const q = rollover(p.quests, date)
+  return q === p.quests ? p : { ...p, quests: q }
+}
+
+export function setQuests(p: PlayerState, quests: QuestState): PlayerState {
+  return { ...p, quests }
+}
+
+export function claimQuest(p: PlayerState, q: Quest): Op {
+  if ((p.quests.progress[q.id] ?? 0) < q.target) return fail('Nhiệm vụ chưa xong.')
+  if (p.quests.claimed.includes(q.id)) return fail('Đã nhận thưởng rồi.')
+  return ok({ ...p, coins: p.coins + q.rewardXu, xp: p.xp + q.rewardXp, quests: { ...p.quests, claimed: [...p.quests.claimed, q.id] } })
+}
+
+export function setupFor(p: PlayerState, loc: Location, waterTempC: number, t = 0): Setup {
   const rod = rodOf(p.equipped.rod)
   const line = lineOf(p.equipped.line)
   return {
@@ -154,6 +197,7 @@ export function setupFor(p: PlayerState, loc: Location, waterTempC: number): Set
     waterTempC,
     strength: rod.strength * line.strength,
     castBonusM: rod.castBonusM,
+    chum: t ? chumLevel(p, loc.id, t) : 0,
   }
 }
 
@@ -166,12 +210,13 @@ export function buyTicket(p: PlayerState, loc: Location, hours: number): Op {
   return ok({ ...p, coins: p.coins - t.priceXu })
 }
 
-export function salePrice(speciesId: string, weightG: number): number {
-  return Math.round((speciesOf(speciesId).priceXuPerKg * weightG) / 1000)
+/** Giá bán một con. factor < 1 ở sông, hồ tự nhiên (bán cho lái cá ở chợ). */
+export function salePrice(speciesId: string, weightG: number, factor = 1): number {
+  return Math.round((speciesOf(speciesId).priceXuPerKg * weightG * factor) / 1000)
 }
 
-export function sell(p: PlayerState, fish: readonly { speciesId: string; weightG: number }[]): { state: PlayerState; earned: number } {
-  const earned = fish.reduce((a, f) => a + salePrice(f.speciesId, f.weightG), 0)
+export function sell(p: PlayerState, fish: readonly { speciesId: string; weightG: number }[], factor = 1): { state: PlayerState; earned: number } {
+  const earned = fish.reduce((a, f) => a + salePrice(f.speciesId, f.weightG, factor), 0)
   return { state: { ...p, coins: p.coins + earned }, earned }
 }
 

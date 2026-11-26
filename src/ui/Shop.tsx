@@ -36,6 +36,7 @@ export function Shop() {
             <ul className="choice-list">
               {g.items.map((i) => {
                 const owned = player.owned[g.kind].includes(i.id)
+                const locked = P.levelOf(player.xp) < i.minLevel
                 return (
                   <li key={i.id} className="shop-item">
                     <div>
@@ -44,6 +45,8 @@ export function Shop() {
                     </div>
                     {owned ? (
                       <span className="muted">Đã có</span>
+                    ) : locked ? (
+                      <span className="muted">Cấp {i.minLevel}</span>
                     ) : (
                       <button type="button" className="primary" disabled={player.coins < i.priceXu} onClick={() => buy((p) => P.buyGear(p, g.kind, i.id), i.nameVi)}>
                         {xu(i.priceXu)}

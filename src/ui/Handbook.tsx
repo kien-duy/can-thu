@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { LOCATIONS, locationOf, SPECIES, speciesOf } from '../content'
+import { CREATURES, LOCATIONS, locationOf, SPECIES, speciesOf } from '../content'
 import { kg, useGame } from '../game/store'
 import { dateTimeLabel as date, WEATHER_LABEL } from '../sim/world'
+import { RhythmLab } from './RhythmLab'
 import { Sheet, Tabs } from './Sheet'
 
-type Tab = 'species' | 'journal'
+type Tab = 'species' | 'journal' | 'rhythm' | 'creatures'
 
 export function Handbook() {
   const entries = useGame((s) => s.handbook)
@@ -18,9 +19,14 @@ export function Handbook() {
         options={[
           { id: 'species', label: 'Các loài' },
           { id: 'journal', label: 'Nhật ký câu' },
+          { id: 'rhythm', label: 'Nhịp phao' },
+          { id: 'creatures', label: 'Sinh vật đã gặp' },
         ]}
       />
-      {tab === 'species' ? <SpeciesList caught={caught} /> : <Journal />}
+      {tab === 'species' && <SpeciesList caught={caught} />}
+      {tab === 'journal' && <Journal />}
+      {tab === 'rhythm' && <RhythmLab unlocked={new Set(caught.keys())} />}
+      {tab === 'creatures' && <Creatures />}
     </Sheet>
   )
 }
@@ -113,5 +119,37 @@ function Journal() {
         ))}
       </tbody>
     </table>
+  )
+}
+
+function Creatures() {
+  const sightings = useGame((s) => s.sightings)
+  const seen = new Map(sightings.map((x) => [x.creatureId, x]))
+  return (
+    <>
+      <p className="muted">
+        {seen.size}/{CREATURES.length} loài. Mỗi chỗ câu, mỗi giờ, mỗi kiểu trời có những vị khách khác nhau ghé bờ nước.
+      </p>
+      <ul className="species-list" data-testid="creatures">
+        {CREATURES.map((c) => {
+          const x = seen.get(c.id)
+          return (
+            <li key={c.id} className={`species${x ? '' : ' species--unknown'}`} data-seen={x ? 'yes' : 'no'}>
+              <h3>{x ? c.nameVi : 'Chưa gặp'}</h3>
+              {x ? (
+                <>
+                  <p>{c.note}</p>
+                  <p className="muted small">
+                    Lần đầu gặp ở {locationOf(x.firstLocation).nameVi}, {date(x.firstSeenAt)} · đã gặp {x.timesSeen} lần
+                  </p>
+                </>
+              ) : (
+                <p className="muted">Hay ghé: {c.locations.map((l) => locationOf(l).nameVi).join(', ')}.</p>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </>
   )
 }

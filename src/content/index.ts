@@ -2,8 +2,10 @@
 // Thêm loài, địa điểm, nguyên liệu, đồ nghề = thêm dữ liệu, không phải sửa code.
 import { z } from 'zod'
 import baitJson from '../../content/bait.json'
+import creaturesJson from '../../content/creatures.json'
 import gearJson from '../../content/gear.json'
 import locationsJson from '../../content/locations.json'
+import questsJson from '../../content/quests.json'
 import speciesJson from '../../content/species.json'
 
 const range = z.tuple([z.number(), z.number()]).refine(([a, b]) => b > a, 'range: max phải > min')
@@ -52,6 +54,11 @@ export const LocationSchema = z.object({
   castDistanceM: range,
   waitSec: range,
   tickets: z.array(z.object({ hours: z.number().positive().max(8), priceXu: z.number().int().nonnegative() })),
+  /** cấp tối thiểu để mở địa điểm */
+  minLevel: z.number().int().positive(),
+  /** hệ số giá bán so với giá thu của hồ dịch vụ (sông, hồ tự nhiên bán cho lái cá rẻ hơn) */
+  saleFactor: z.number().positive().max(1),
+  theme: z.enum(['fee_pond', 'river', 'mountain']),
   species: z.array(z.object({ id, weight: z.number().positive() })).min(1),
 })
 
@@ -78,7 +85,7 @@ const BaitSchema = z.object({
   starterStock: z.record(id, z.number().int().nonnegative()),
 })
 
-const priced = { id, nameVi: z.string().min(1), note: z.string().min(1), priceXu: z.number().int().nonnegative() }
+const priced = { id, nameVi: z.string().min(1), note: z.string().min(1), priceXu: z.number().int().nonnegative(), minLevel: z.number().int().positive() }
 export const RigSchema = z.object({
   id,
   nameVi: z.string().min(1),
@@ -96,6 +103,33 @@ const GearSchema = z.object({
   starter: z.object({ rod: id, line: id, float: id, rig: id }),
 })
 
+export const CreatureSchema = z.object({
+  id,
+  nameVi: z.string().min(1),
+  visual: z.enum(['butterfly', 'dragonfly', 'firefly', 'bird', 'kingfisher', 'buffalo', 'duck', 'deer', 'monkey', 'frog']),
+  locations: z.array(id).min(1),
+  hours: z.array(z.number().int().min(0).max(23)).min(1),
+  weathers: z.array(z.enum(['sunny', 'cloudy', 'rain', 'storm', 'fog'])).min(1),
+  weight: z.number().positive(),
+  note: z.string().min(1),
+})
+
+const QuestTemplateSchema = z.object({
+  id,
+  kind: z.enum(['catch_count', 'catch_species', 'catch_weight', 'sighting', 'profit_shift', 'catch_at']),
+  textVi: z.string().min(1),
+  n: range.or(z.tuple([z.number(), z.number()])).optional(),
+  kg: z.tuple([z.number(), z.number()]).optional(),
+  species: id.optional(),
+  location: id.optional(),
+  minLevel: z.number().int().positive().optional(),
+  rewardXu: z.tuple([z.number().int(), z.number().int()]),
+  rewardXp: z.number().int().nonnegative(),
+})
+const QuestsSchema = z.object({ perDay: z.number().int().positive(), templates: z.array(QuestTemplateSchema).min(1) })
+
+export type Creature = z.infer<typeof CreatureSchema>
+export type QuestTemplate = z.infer<typeof QuestTemplateSchema>
 export type Species = z.infer<typeof SpeciesSchema>
 export type Location = z.infer<typeof LocationSchema>
 export type Ingredient = z.infer<typeof IngredientSchema>
@@ -110,6 +144,8 @@ export const SPECIES: readonly Species[] = z.array(SpeciesSchema).parse(speciesJ
 export const LOCATIONS: readonly Location[] = z.array(LocationSchema).parse(locationsJson)
 export const BAIT = BaitSchema.parse(baitJson)
 export const GEAR = GearSchema.parse(gearJson)
+export const CREATURES: readonly Creature[] = z.array(CreatureSchema).parse(creaturesJson)
+export const QUESTS = QuestsSchema.parse(questsJson)
 
 const speciesById = new Map(SPECIES.map((s) => [s.id, s]))
 const ingredientIds = new Set(BAIT.ingredients.map((i) => i.id))
@@ -121,6 +157,12 @@ for (const loc of LOCATIONS) {
 for (const r of BAIT.recipes) {
   for (const k of Object.keys(r.scoops)) if (!ingredientIds.has(k)) throw new Error(`content: bài ${r.id} dùng nguyên liệu không có: ${k}`)
   for (const s of r.for) if (!speciesById.has(s)) throw new Error(`content: bài ${r.id} trỏ tới loài không có: ${s}`)
+}
+const locationIds = new Set(LOCATIONS.map((l) => l.id))
+for (const c of CREATURES) for (const l of c.locations) if (!locationIds.has(l)) throw new Error(`content: sinh vật ${c.id} ở địa điểm không có: ${l}`)
+for (const q of QUESTS.templates) {
+  if (q.species && !speciesById.has(q.species)) throw new Error(`content: nhiệm vụ ${q.id} trỏ tới loài không có`)
+  if (q.location && !locationIds.has(q.location)) throw new Error(`content: nhiệm vụ ${q.id} trỏ tới địa điểm không có`)
 }
 for (const k of Object.keys(BAIT.starterStock)) if (!ingredientIds.has(k)) throw new Error(`content: starterStock có ${k}`)
 {

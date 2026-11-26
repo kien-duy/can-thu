@@ -1,6 +1,6 @@
 import type { Location, Species } from '../content'
 import { between, type Rng, weighted } from './rng'
-import { type Setup, signalScale, speciesWeight, waitFactor } from './setup'
+import { dissolveMs, type Setup, signalScale, speciesWeight, waitFactor } from './setup'
 
 /**
  * Kế hoạch một lượt cá cắn câu, tính ngay lúc quăng.
@@ -41,6 +41,10 @@ export interface SpeciesBitePlan extends BitePlan {
   weightG: number
   signal: Species['bite']['signal']
   twitches: Twitch[]
+  /** lúc mồi rã hết khỏi lưỡi; sau mốc này không còn cá nào ăn */
+  dissolveAt: number
+  /** true = mồi rã trước khi có cá tới: lượt này không có cá */
+  empty: boolean
 }
 
 export function planBite(rng: Rng, castAt: number, p: BiteParams = DEFAULT_BITE): BitePlan {
@@ -88,7 +92,7 @@ export function planSpeciesBite(
   })
   const species = weighted(rng, weights)
   const attract = weights.reduce((a, w) => a + w.weight, 0) / weights.reduce((a, w) => a + w.base, 0)
-  const waitMul = o.setup ? waitFactor(attract, o.setup.bait !== null) : 1
+  const waitMul = o.setup ? waitFactor(attract, o.setup.bait !== null, o.setup.chum ?? 0) : 1
   const amp = o.setup ? signalScale(loc, o.setup) : 1
   const falseBites = o.setup?.rig.falseBites ?? 1
   const nibbleStart = o.settledAt + between(rng, loc.waitSec[0], loc.waitSec[1]) * 1000 * scale * waitMul
@@ -107,7 +111,11 @@ export function planSpeciesBite(
     // chép, trắm: "chớp đầu" ngay trước khi ăn thật. Phao tụt rồi bật về, cá mới ngậm hờ.
     twitches.push({ at: strikeOpen - 650, durMs: 380, amp: 0.55 * amp })
   }
+  // chế độ nhanh không thu mồi rã nhỏ bằng thời gian chờ, kẻo lượt nào cũng rã trước khi cá tới
+  const dissolveAt = o.settledAt + (o.setup ? dissolveMs(o.setup.bait) : 600_000) * Math.max(scale, 0.25)
   return {
+    dissolveAt,
+    empty: nibbleStart >= dissolveAt,
     castAt: o.castAt,
     nibbleStart,
     strikeOpen,
@@ -122,8 +130,8 @@ export function planSpeciesBite(
 export type StrikeResult = 'hooked' | 'too_early' | 'too_late' | 'nothing'
 
 /** Chấm cú giật tại thời điểm t. */
-export function judgeStrike(plan: BitePlan, t: number): StrikeResult {
-  if (t < plan.nibbleStart) return 'nothing'
+export function judgeStrike(plan: BitePlan & { empty?: boolean }, t: number): StrikeResult {
+  if (plan.empty || t < plan.nibbleStart) return 'nothing'
   if (t < plan.strikeOpen) return 'too_early'
   if (t <= plan.strikeClose) return 'hooked'
   return 'too_late'
@@ -146,6 +154,11 @@ const ease = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x))
  * Hàm thuần theo thời gian: cảnh 3D, khung phao và test đều gọi chung.
  */
 export function floatOffset(plan: SpeciesBitePlan, t: number): number {
+  if (plan.empty) {
+    // mồi rã dần, lưỡi nhẹ đi: phao nổi lên từng chút về nấc cân
+    const x = (t - (plan.dissolveAt - 20_000)) / 20_000
+    return x <= 0 ? 0 : -1.5 * Math.min(1, x)
+  }
   let off = 0
   for (const w of plan.twitches) {
     const x = (t - w.at) / w.durMs

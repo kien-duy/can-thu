@@ -6,6 +6,8 @@ import { useGameLoop, useKeyboard } from './ui/controls'
 import { FloatView } from './ui/FloatView'
 import { Handbook } from './ui/Handbook'
 import { ActionBar, NotifyPrompt, StatusCard, Toasts } from './ui/Hud'
+import { claimableCount, QuestsPanel } from './ui/QuestsPanel'
+import { SettingsPanel } from './ui/SettingsPanel'
 import { ShiftPicker, ShiftSummary } from './ui/Shift'
 import { Shop } from './ui/Shop'
 import { Tray } from './ui/Tray'
@@ -32,6 +34,9 @@ export function App() {
   const booted = useGame((s) => s.booted)
   const inShift = useGame((s) => !!s.session)
   const shiftOver = useGame((s) => s.shiftOver)
+  const paidShift = useGame((s) => s.session?.kind === 'paid_shift')
+  const wide = useGame((s) => s.prefs.wide)
+  const claimable = useGame(claimableCount)
   useGameLoop()
   useKeyboard()
   useEffect(() => {
@@ -65,6 +70,9 @@ export function App() {
           <button type="button" className="ghost" onClick={() => open('handbook')} data-testid="open-handbook">
             Sổ tay
           </button>
+          <button type="button" className="ghost" onClick={() => open('quests')} data-testid="open-quests">
+            Nhiệm vụ{claimable > 0 && <span className="badge" aria-label={`${claimable} nhiệm vụ nhận thưởng được`}>{claimable}</span>}
+          </button>
           <button type="button" className="ghost" onClick={() => open('shop')} data-testid="open-shop">
             Cửa hàng
           </button>
@@ -74,11 +82,19 @@ export function App() {
               <button type="button" className="ghost" onClick={() => useGame.getState().setView(view === '3d' ? 'office' : '3d')}>
                 {view === '3d' ? 'Chế độ văn phòng' : 'Cảnh 3D'}
               </button>
-              {inShift && (
-                <button type="button" className="ghost" data-testid="end-shift" onClick={() => useGame.getState().endShiftEarly()}>
-                  Kết thúc ca sớm
+              {view === '3d' && (
+                <button type="button" className="ghost" onClick={() => useGame.getState().setPrefs({ wide: !wide })}>
+                  {wide ? 'Góc ngồi câu' : 'Góc rộng toàn cảnh'}
                 </button>
               )}
+              {inShift && (
+                <button type="button" className="ghost" data-testid="end-shift" onClick={() => useGame.getState().endShiftEarly()}>
+                  {paidShift ? 'Kết thúc ca sớm' : 'Về (cân cá)'}
+                </button>
+              )}
+              <button type="button" className="ghost" onClick={() => open('settings')}>
+                Cài đặt
+              </button>
               <button type="button" className="ghost" onClick={() => open('account')}>
                 Tài khoản
               </button>
@@ -98,6 +114,8 @@ export function App() {
       {panel === 'tray' && <Tray />}
       {panel === 'shop' && <Shop />}
       {panel === 'account' && <AccountPanel />}
+      {panel === 'quests' && <QuestsPanel />}
+      {panel === 'settings' && <SettingsPanel />}
     </div>
   )
 }

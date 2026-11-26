@@ -143,7 +143,7 @@ Mỗi milestone đều chạy được và có test headless.
 - Liên kết Google/email; nút xoá tài khoản.
 - Sổ tay đầy đủ: thẻ loài với đặc tính đời thật, nhật ký, kỷ lục.
 
-**M3. Should-haves:**
+**M3. Should-haves:** (xong 2026-11-26. Đồ hoạ vẫn dựng bằng khối cơ bản của three, chưa dùng model CC0; động vật là khối đơn giản có chuyển động. Chưa làm: kiểu kéo cá thứ hai, đậu chuồn chuồn lên cần.)
 - Làm đẹp 3D (low-poly, nước có shader, trời đổi theo giờ thật), camera tự zoom vào phao, góc rộng.
 - Địa điểm 2 và 3 (sông quê, hồ núi).
 - Động vật ghé qua + "Sinh vật đã gặp".

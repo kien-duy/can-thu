@@ -36,7 +36,7 @@ describe('người chơi mới', () => {
 
 describe('cửa hàng', () => {
   it('mua cần: trừ xu, có trong túi, tự lắp vào', () => {
-    let p = { ...newPlayer(), coins: 1000 }
+    let p = { ...newPlayer(), coins: 1000, xp: 60 } // cần carbon mở ở cấp 2
     const r = buyGear(p, 'rods', 'can_carbon_45')
     expect(r.ok).toBe(true)
     if (!r.ok) return
@@ -46,7 +46,7 @@ describe('cửa hàng', () => {
     expect(buyGear(p, 'rods', 'can_carbon_45')).toEqual({ ok: false, error: 'Đã có rồi.' })
   })
   it('không đủ xu thì báo thiếu bao nhiêu', () => {
-    expect(buyGear(newPlayer(), 'rods', 'can_cung_54')).toEqual({ ok: false, error: 'Thiếu 1700 xu.' })
+    expect(buyGear({ ...newPlayer(), xp: 240 }, 'rods', 'can_cung_54')).toEqual({ ok: false, error: 'Thiếu 1700 xu.' })
   })
   it('mua nguyên liệu cộng muỗng vào kho', () => {
     const r = buyIngredient(newPlayer(), 'bot_tom')

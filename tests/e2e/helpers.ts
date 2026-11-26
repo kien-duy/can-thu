@@ -55,3 +55,28 @@ export async function fightUntilLandable(page: Page) {
   )
   if (end !== 'landable') throw new Error(`trận kéo kết thúc ở pha ${end}`)
 }
+
+/** Đợi phao báo ăn thật rồi giật ngay trong trang (như người đang nhìn phao), tránh độ trễ của Playwright. */
+export async function strikeOnWindow(page: Page, timeoutMs = 30_000) {
+  const r = await page.evaluate(
+    (timeout) =>
+      new Promise<string>((resolve) => {
+        const app = document.querySelector<HTMLElement>('[data-testid=app]')!
+        const started = Date.now()
+        const timer = setInterval(() => {
+          if (app.dataset.wait === 'window') {
+            window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ', bubbles: true }))
+            window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Space', key: ' ', bubbles: true }))
+            clearInterval(timer)
+            resolve('ok')
+          } else if (app.dataset.phase === 'result' || Date.now() - started > timeout) {
+            clearInterval(timer)
+            resolve(`không thấy cửa sổ giật (pha ${app.dataset.phase}): ${document.querySelector('[data-testid=hint]')?.textContent}`)
+          }
+        }, 40)
+      }),
+    timeoutMs,
+  )
+  if (r !== 'ok') throw new Error(r)
+  await expect(app(page)).toHaveAttribute('data-phase', /fighting|landable/)
+}

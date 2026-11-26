@@ -1,23 +1,122 @@
 {
   "rigs": [
-    { "id": "can4_cau2", "nameVi": "Cân 4 câu 2", "tag": "chuẩn · nhạy", "note": "Lưỡi dưới vừa chạm đáy, lưỡi trên treo. Dùng được hầu hết các buổi, phao báo rõ.", "bottomOffsetCm": 0, "sensitivity": 1.0, "falseBites": 1.0 },
-    { "id": "can3_cau1", "nameVi": "Cân 3 câu 1", "tag": "nhạy", "note": "Chì nặng hơn, mồi xuống nhanh. Báo rất nhạy nhưng hay báo giả khi cá tạp quậy.", "bottomOffsetCm": 0, "sensitivity": 1.3, "falseBites": 1.4 },
-    { "id": "hai_luoi_nam", "nameVi": "Cân 2, hai lưỡi nằm", "tag": "lụt", "note": "Hai mồi nằm đáy, thẻo chùng. Ít báo giả, cá to ngậm mồi yên tâm hơn nhưng phao báo nhỏ.", "bottomOffsetCm": 4, "sensitivity": 0.65, "falseBites": 0.5 },
-    { "id": "lung_10", "nameVi": "Câu lửng 10 cm", "tag": "lửng", "note": "Mồi treo cách đáy 10 cm. Hợp cá tầng giữa (mè, trắm cỏ, chim trắng) và lúc trời oi nóng.", "bottomOffsetCm": -10, "sensitivity": 1.1, "falseBites": 0.8 }
+    {
+      "id": "can4_cau2",
+      "nameVi": "Cân 4 câu 2",
+      "tag": "chuẩn · nhạy",
+      "note": "Lưỡi dưới vừa chạm đáy, lưỡi trên treo. Dùng được hầu hết các buổi, phao báo rõ.",
+      "bottomOffsetCm": 0,
+      "sensitivity": 1.0,
+      "falseBites": 1.0
+    },
+    {
+      "id": "can3_cau1",
+      "nameVi": "Cân 3 câu 1",
+      "tag": "nhạy",
+      "note": "Chì nặng hơn, mồi xuống nhanh. Báo rất nhạy nhưng hay báo giả khi cá tạp quậy.",
+      "bottomOffsetCm": 0,
+      "sensitivity": 1.3,
+      "falseBites": 1.4
+    },
+    {
+      "id": "hai_luoi_nam",
+      "nameVi": "Cân 2, hai lưỡi nằm",
+      "tag": "lụt",
+      "note": "Hai mồi nằm đáy, thẻo chùng. Ít báo giả, cá to ngậm mồi yên tâm hơn nhưng phao báo nhỏ.",
+      "bottomOffsetCm": 4,
+      "sensitivity": 0.65,
+      "falseBites": 0.5
+    },
+    {
+      "id": "lung_10",
+      "nameVi": "Câu lửng 10 cm",
+      "tag": "lửng",
+      "note": "Mồi treo cách đáy 10 cm. Hợp cá tầng giữa (mè, trắm cỏ, chim trắng) và lúc trời oi nóng.",
+      "bottomOffsetCm": -10,
+      "sensitivity": 1.1,
+      "falseBites": 0.8
+    }
   ],
   "rods": [
-    { "id": "can_tre_36", "nameVi": "Cần tre 3m6", "note": "Cần khởi đầu, dẻo, đỡ sốc tốt nhưng yếu với cá to.", "priceXu": 0, "strength": 1.0, "castBonusM": 0 },
-    { "id": "can_carbon_45", "nameVi": "Cần carbon 4m5", "note": "Nhẹ tay, quăng xa hơn, chịu được cá tầm 3–4 kg.", "priceXu": 800, "strength": 1.3, "castBonusM": 1.5 },
-    { "id": "can_cung_54", "nameVi": "Cần cứng 5m4", "note": "Cần khoẻ cho trắm, mè, chép lớn.", "priceXu": 2200, "strength": 1.7, "castBonusM": 2.5 }
+    {
+      "id": "can_tre_36",
+      "nameVi": "Cần tre 3m6",
+      "note": "Cần khởi đầu, dẻo, đỡ sốc tốt nhưng yếu với cá to.",
+      "priceXu": 0,
+      "strength": 1.0,
+      "castBonusM": 0,
+      "minLevel": 1
+    },
+    {
+      "id": "can_carbon_45",
+      "nameVi": "Cần carbon 4m5",
+      "note": "Nhẹ tay, quăng xa hơn, chịu được cá tầm 3–4 kg.",
+      "priceXu": 800,
+      "strength": 1.3,
+      "castBonusM": 1.5,
+      "minLevel": 2
+    },
+    {
+      "id": "can_cung_54",
+      "nameVi": "Cần cứng 5m4",
+      "note": "Cần khoẻ cho trắm, mè, chép lớn.",
+      "priceXu": 2200,
+      "strength": 1.7,
+      "castBonusM": 2.5,
+      "minLevel": 3
+    }
   ],
   "lines": [
-    { "id": "day_10", "nameVi": "Dây 1.0, thẻo 0.6", "note": "Mảnh, cá nhát chịu ăn, nhưng dễ đứt.", "priceXu": 0, "strength": 1.0, "shyFactor": 1.0 },
-    { "id": "day_15", "nameVi": "Dây 1.5, thẻo 1.0", "note": "Cân bằng, dùng cho phần lớn cá hồ dịch vụ.", "priceXu": 250, "strength": 1.3, "shyFactor": 0.95 },
-    { "id": "day_25", "nameVi": "Dây 2.5, thẻo 2.0", "note": "Rất chắc, nhưng diếc và trôi ngại dây to.", "priceXu": 600, "strength": 1.7, "shyFactor": 0.75 }
+    {
+      "id": "day_10",
+      "nameVi": "Dây 1.0, thẻo 0.6",
+      "note": "Mảnh, cá nhát chịu ăn, nhưng dễ đứt.",
+      "priceXu": 0,
+      "strength": 1.0,
+      "shyFactor": 1.0,
+      "minLevel": 1
+    },
+    {
+      "id": "day_15",
+      "nameVi": "Dây 1.5, thẻo 1.0",
+      "note": "Cân bằng, dùng cho phần lớn cá hồ dịch vụ.",
+      "priceXu": 250,
+      "strength": 1.3,
+      "shyFactor": 0.95,
+      "minLevel": 1
+    },
+    {
+      "id": "day_25",
+      "nameVi": "Dây 2.5, thẻo 2.0",
+      "note": "Rất chắc, nhưng diếc và trôi ngại dây to.",
+      "priceXu": 600,
+      "strength": 1.7,
+      "shyFactor": 0.75,
+      "minLevel": 3
+    }
   ],
   "floats": [
-    { "id": "phao_nano", "nameVi": "Phao nano", "note": "Phao khởi đầu, đọc nấc dễ.", "priceXu": 0, "sensitivity": 1.0 },
-    { "id": "phao_co_lau", "nameVi": "Phao cỏ lau", "note": "Thân mảnh, báo rất nhạy: thấy cả diếc, trôi mút mồi.", "priceXu": 300, "sensitivity": 1.35 }
+    {
+      "id": "phao_nano",
+      "nameVi": "Phao nano",
+      "note": "Phao khởi đầu, đọc nấc dễ.",
+      "priceXu": 0,
+      "sensitivity": 1.0,
+      "minLevel": 1
+    },
+    {
+      "id": "phao_co_lau",
+      "nameVi": "Phao cỏ lau",
+      "note": "Thân mảnh, báo rất nhạy: thấy cả diếc, trôi mút mồi.",
+      "priceXu": 300,
+      "sensitivity": 1.35,
+      "minLevel": 2
+    }
   ],
-  "starter": { "rod": "can_tre_36", "line": "day_10", "float": "phao_nano", "rig": "can4_cau2" }
+  "starter": {
+    "rod": "can_tre_36",
+    "line": "day_10",
+    "float": "phao_nano",
+    "rig": "can4_cau2"
+  }
 }

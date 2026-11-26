@@ -1,0 +1,14 @@
+{
+  "perDay": 3,
+  "templates": [
+    { "id": "catch_any", "kind": "catch_count", "textVi": "Câu được {n} con cá bất kỳ", "n": [3, 6], "rewardXu": [30, 60], "rewardXp": 20 },
+    { "id": "catch_species_ro_phi", "kind": "catch_species", "species": "ro_phi_den", "textVi": "Câu được {n} con rô phi đen", "n": [2, 4], "rewardXu": [30, 50], "rewardXp": 15 },
+    { "id": "catch_species_diec", "kind": "catch_species", "species": "diec", "textVi": "Câu được {n} con diếc", "n": [1, 2], "rewardXu": [40, 60], "rewardXp": 20 },
+    { "id": "catch_species_chep", "kind": "catch_species", "species": "chep", "textVi": "Câu được {n} con chép", "n": [1, 1], "rewardXu": [50, 70], "rewardXp": 25 },
+    { "id": "catch_heavy", "kind": "catch_weight", "textVi": "Câu được một con từ {kg} kg trở lên", "kg": [1, 2], "rewardXu": [50, 90], "rewardXp": 30 },
+    { "id": "see_creature", "kind": "sighting", "textVi": "Gặp {n} sinh vật ghé qua bờ nước", "n": [1, 2], "rewardXu": [20, 40], "rewardXp": 15 },
+    { "id": "sell_shift", "kind": "profit_shift", "textVi": "Kết thúc một ca hồ dịch vụ có lãi", "rewardXu": [40, 60], "rewardXp": 20 },
+    { "id": "visit_river", "kind": "catch_at", "location": "ben_song_lang", "minLevel": 2, "textVi": "Câu được {n} con ở Bến sông làng", "n": [2, 3], "rewardXu": [40, 60], "rewardXp": 25 },
+    { "id": "visit_mountain", "kind": "catch_at", "location": "ho_nui_may", "minLevel": 4, "textVi": "Câu được {n} con ở Hồ núi Mây", "n": [1, 2], "rewardXu": [60, 90], "rewardXp": 35 }
+  ]
+}

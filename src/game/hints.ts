@@ -61,6 +61,8 @@ function resultText(s: GameState): string {
       return `Sớm quá, ${name} mới thử mồi.`
     case 'too_late':
       return `Muộn rồi, ${name} đã nhả mồi.`
+    case 'bait_gone':
+      return 'Mồi rã hết rồi, phao nổi về nấc cân. Nhấc cần móc mồi mới. Mồi tơi rã nhanh, mồi có bột kéo sợi bền hơn.'
     case 'gone':
       return `${capital(name)} ăn xong mồi rồi bỏ đi. Lần sau thấy phao đứng hẳn là giật.`
     case 'broke':

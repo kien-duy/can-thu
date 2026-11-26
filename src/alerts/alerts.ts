@@ -33,6 +33,12 @@ export class Alerts {
     }
   }
 
+  private sound = true
+
+  setSound(on: boolean) {
+    this.sound = on
+  }
+
   setNotify(on: boolean) {
     this.notify = on
   }
@@ -75,7 +81,7 @@ export class Alerts {
 
   private tap(freq: number) {
     const a = this.audio
-    if (!a || a.state !== 'running') return
+    if (!this.sound || !a || a.state !== 'running') return
     const osc = a.createOscillator()
     const gain = a.createGain()
     osc.type = 'triangle'

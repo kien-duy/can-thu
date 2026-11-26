@@ -1,5 +1,5 @@
 import { actionFor } from '../game/hints'
-import { levelOf } from '../game/player'
+import { chumLevel, levelOf } from '../game/player'
 import { kg, useGame } from '../game/store'
 import { chargePower } from '../sim/game'
 import { clockLabel, dayPart, localHour, WEATHER_LABEL } from '../sim/world'
@@ -26,6 +26,7 @@ export function StatusCard() {
       <div>
         {loc.nameVi}
         {session?.plannedEndAt && <span className="muted"> · ca còn <span data-testid="shift-left">{shiftRemaining(session.plannedEndAt, t)}</span></span>}
+        {session && !session.plannedEndAt && <span className="muted"> · câu tự do</span>}
       </div>
       {w && (
         <div className="muted">
@@ -49,6 +50,8 @@ export function ActionBar() {
   const hasBait = useGame((s) => !!s.player.bowl && s.player.bowl.uses > 0)
   const sounded = useGame((s) => s.player.depthCm[s.cfg.location.id] !== undefined)
   const bowl = useGame((s) => s.player.bowl)
+  const chum = useGame((s) => chumLevel(s.player, s.cfg.location.id, Math.floor(s.now / 5000) * 5000))
+  const canChum = game.phase === 'ready' || game.phase === 'result'
   const a = actionFor(game, now, { hasBait, sounded })
   const power = game.phase === 'charging' && game.chargeStartedAt ? chargePower(game.chargeStartedAt, now) : 0
   return (
@@ -76,9 +79,16 @@ export function ActionBar() {
         {a.label}
         {game.phase === 'charging' && <span className="action__power" style={{ width: `${power * 100}%` }} />}
       </button>
-      <p className="muted small">
-        {bowl ? `Mồi: ${bowl.label}, còn ${bowl.uses} lần móc` : 'Hết mồi'} · Space · Vớt: E
-      </p>
+      <div className="action__secondary">
+        <span className="muted small">
+          {bowl ? `Mồi: ${bowl.label}, còn ${bowl.uses} lần móc` : 'Hết mồi'} · Ổ: {chum < 0.05 ? 'chưa có' : `${Math.round(chum * 100)}%`} · Space · Vớt: E
+        </span>
+        {canChum && (
+          <button type="button" className="ghost ghost--small" data-testid="chum" onClick={() => useGame.getState().throwChum()} title="Ném một nắm mồi xả (tốn 3 lần móc) để gom cá về ổ">
+            Xả mồi mở ổ
+          </button>
+        )}
+      </div>
     </section>
   )
 }

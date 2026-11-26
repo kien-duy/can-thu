@@ -1,6 +1,6 @@
-import { create } from 'zustand'
+import { create, type StoreApi, type UseBoundStore } from 'zustand'
 import { Alerts } from '../alerts/alerts'
-import { LOCATIONS, SPECIES, speciesOf } from '../content'
+import { CREATURES, type Location, LOCATIONS, locationOf, SPECIES, speciesOf } from '../content'
 import {
   type Account,
   type CatchRecord,
@@ -9,9 +9,13 @@ import {
   type HandbookEntry,
   OutboxRepository,
   type SessionRecord,
+  type Sighting,
 } from '../data'
 import { type GameConfig, type GameEvent, type GameState, initialState, reduce } from '../sim/game'
+import { createRng } from '../sim/rng'
+import { nextVisit, type Visit } from '../sim/wildlife'
 import { localHour, weatherFor } from '../sim/world'
+import { advanceQuests, dailyQuests, type Quest, type QuestEvent } from './quests'
 import * as P from './player'
 
 const params = new URLSearchParams(location.search)
@@ -21,7 +25,19 @@ const SEED = Number(params.get('seed') ?? Math.floor(Math.random() * 2 ** 31))
 const HOUR_MS = FAST ? 60_000 : 3_600_000
 
 export type ViewMode = '3d' | 'office'
-export type Panel = 'handbook' | 'tray' | 'shop' | 'account' | null
+export type Panel = 'handbook' | 'tray' | 'shop' | 'account' | 'quests' | 'settings' | null
+export type Quality = 'low' | 'medium' | 'high'
+
+export interface Prefs {
+  quality: Quality
+  floatSize: 's' | 'm' | 'l'
+  sound: boolean
+  /** góc rộng: camera lùi xa nhìn toàn cảnh hồ */
+  wide: boolean
+  xray: boolean
+}
+
+const DEFAULT_PREFS: Prefs = { quality: 'medium', floatSize: 'm', sound: true, wide: false, xray: false }
 
 export interface Toast {
   id: number
@@ -50,6 +66,12 @@ interface Store {
   notifyPrompt: boolean
   toasts: Toast[]
   alerts: Alerts
+  prefs: Prefs
+  sightings: Sighting[]
+  /** sinh vật đang ghé (đang hiện trong cảnh) và lượt ghé kế tiếp */
+  visitor?: Visit
+  nextVisit?: Visit | null
+  visits: number
 
   boot(): Promise<void>
   dispatch(e: GameEvent): void
@@ -60,7 +82,11 @@ interface Store {
   /** áp một thao tác lên tiến độ; lỗi thì báo bằng toast. Trả về true nếu thành công. */
   apply(op: (p: P.PlayerState) => P.Op | P.PlayerState): boolean
   /** free: chủ hồ cho ghi sổ (khi hết xu), để người chơi không bị kẹt */
-  startShift(hours: number, free?: boolean): Promise<void>
+  startShift(locationId: string, hours: number | null, free?: boolean): Promise<void>
+  throwChum(): void
+  setPrefs(p: Partial<Prefs>): void
+  claimQuest(q: Quest): void
+  questsNow(): Quest[]
   endShiftEarly(): void
   finishShift(choice: 'sell' | 'release'): Promise<void>
   enableNotifications(): Promise<void>
@@ -73,7 +99,7 @@ const location0 = LOCATIONS[0]!
 let toastId = 0
 let saveTimer: ReturnType<typeof setTimeout> | undefined
 
-export const useGame = create<Store>((set, get) => ({
+export const useGame: UseBoundStore<StoreApi<Store>> = create<Store>((set, get) => ({
   cfg: { location: location0, species: SPECIES, seed: SEED, timeScale: FAST ? 0.08 : 1 },
   game: initialState(Date.now()),
   now: Date.now(),
@@ -89,7 +115,10 @@ export const useGame = create<Store>((set, get) => ({
   panel: null,
   notifyPrompt: false,
   toasts: [],
-  alerts: new Alerts(() => location0.nameVi),
+  alerts: new Alerts(() => useGame.getState().cfg.location.nameVi),
+  prefs: { ...DEFAULT_PREFS, ...readJson<Partial<Prefs>>('can-thu:prefs') },
+  sightings: [],
+  visits: 0,
 
   async boot() {
     const { repo } = get()
@@ -100,9 +129,13 @@ export const useGame = create<Store>((set, get) => ({
       const open = await repo.openSession()
       if (open) {
         const recent = await repo.recentCatches(200)
-        set({ session: open, keepnet: recent.filter((c) => c.sessionId === open.id && c.fate === 'kept').reverse() })
+        set({
+          session: open,
+          cfg: { ...get().cfg, location: locationOf(open.locationId) },
+          keepnet: recent.filter((c) => c.sessionId === open.id && c.fate === 'kept').reverse(),
+        })
       }
-      set({ handbook: await repo.handbook(), repoError: undefined })
+      set({ handbook: await repo.handbook(), sightings: await repo.sightings(), repoError: undefined })
     } catch (e) {
       set({ repoError: `Chưa nối được server, đang lưu tạm trên máy: ${errText(e)}` })
     }
@@ -118,7 +151,7 @@ export const useGame = create<Store>((set, get) => ({
     const { cfg, game, alerts, player, session } = get()
     if (e.type === 'charge' || e.type === 'strike' || e.type === 'reel') alerts.unlockAudio()
     if (e.type === 'charge' && (!session || get().shiftOver)) return
-    const ev: GameEvent = e.type === 'release' ? { ...e, setup: P.setupFor(player, cfg.location, session?.weather.waterTempC ?? 27) } : e
+    const ev: GameEvent = e.type === 'release' ? { ...e, setup: P.setupFor(player, cfg.location, session?.weather.waterTempC ?? 27, e.t) } : e
     const next = reduce(cfg, game, ev)
     if (next === game) return
     set({ game: next, now: e.t })
@@ -136,6 +169,7 @@ export const useGame = create<Store>((set, get) => ({
       set({ shiftOver: true })
       get().alerts.clear()
     }
+    if (session && !shiftOver) tickWildlife(t)
   },
 
   setView(v) {
@@ -170,29 +204,32 @@ export const useGame = create<Store>((set, get) => ({
     return true
   },
 
-  async startShift(hours, free = false) {
-    const { player, cfg, repo } = get()
-    const r: P.Op = free ? { ok: true, state: player } : P.buyTicket(player, cfg.location, hours)
+  async startShift(locationId, hours, free = false) {
+    const { player, repo } = get()
+    const loc = locationOf(locationId)
+    if (!P.canFishAt(player, loc)) return void get().toast(`${loc.nameVi} mở ở cấp ${loc.minLevel}.`, 'error')
+    const paid = hours !== null && loc.tickets.length > 0
+    const r: P.Op = !paid || free ? { ok: true, state: player } : P.buyTicket(player, loc, hours)
     if (!r.ok) return void get().toast(r.error, 'error')
     const now = Date.now()
-    const ticket = cfg.location.tickets.find((t) => t.hours === hours)!
+    const ticket = paid ? loc.tickets.find((t) => t.hours === hours)! : undefined
     const session: SessionRecord = {
       id: crypto.randomUUID(),
-      locationId: cfg.location.id,
-      kind: 'paid_shift',
-      ticketCoins: free ? 0 : ticket.priceXu,
+      locationId: loc.id,
+      kind: paid ? 'paid_shift' : 'free',
+      ticketCoins: free || !ticket ? 0 : ticket.priceXu,
       startedAt: now,
-      plannedEndAt: now + hours * HOUR_MS,
-      weather: weatherFor(now, cfg.location),
+      plannedEndAt: paid && hours !== null ? now + hours * HOUR_MS : undefined,
+      weather: weatherFor(now, loc),
     }
-    set({ player: r.state, session, keepnet: [], shiftOver: false, game: initialState(now) })
+    set({ player: r.state, session, keepnet: [], shiftOver: false, game: initialState(now), cfg: { ...get().cfg, location: loc }, visitor: undefined, nextVisit: undefined })
     scheduleSave(0)
     try {
       await repo.startSession(session)
     } catch (e) {
       set({ repoError: `Chưa lưu được ca câu lên server: ${errText(e)}` })
     }
-    get().toast(`Vào ca ${hours} tiếng ở ${cfg.location.nameVi}. Chúc câu tay!`)
+    get().toast(paid ? `Vào ca ${hours} tiếng ở ${loc.nameVi}. Chúc câu tay!` : `Ra ${loc.nameVi}. Câu bao lâu tuỳ bạn, xong thì bấm Thêm → Về.`)
   },
 
   endShiftEarly() {
@@ -207,8 +244,9 @@ export const useGame = create<Store>((set, get) => ({
     if (!session) return
     let next = player
     let earned = 0
+    const factor = locationOf(session.locationId).saleFactor
     if (choice === 'sell') {
-      const r = P.sell(player, keepnet)
+      const r = P.sell(player, keepnet, factor)
       next = r.state
       earned = r.earned
     } else {
@@ -216,13 +254,16 @@ export const useGame = create<Store>((set, get) => ({
     }
     const fate = choice === 'sell' ? 'sold' : 'released'
     const outcome = keepnet.length === 0 ? 'abandoned' : choice === 'sell' ? 'sold' : 'released'
-    set({ player: next, session: undefined, keepnet: [], shiftOver: false, game: initialState(Date.now()) })
+    set({ player: next, session: undefined, keepnet: [], shiftOver: false, game: initialState(Date.now()), visitor: undefined, nextVisit: undefined })
+    if (session.kind === 'paid_shift' && choice === 'sell' && earned > session.ticketCoins) questEvent({ type: 'profit_shift' })
     scheduleSave(0)
     const net = earned - session.ticketCoins
     get().toast(
-      choice === 'sell'
-        ? `Cân cá xong: ${keepnet.length} con, được ${earned} xu (${net >= 0 ? 'lãi' : 'lỗ'} ${Math.abs(net)} xu so với vé).`
-        : `Thả ${keepnet.length} con về hồ. Cộng kinh nghiệm.`,
+      choice === 'release'
+        ? `Thả ${keepnet.length} con về hồ. Cộng kinh nghiệm.`
+        : session.kind === 'paid_shift'
+          ? `Cân cá xong: ${keepnet.length} con, được ${earned} xu (${net >= 0 ? 'lãi' : 'lỗ'} ${Math.abs(net)} xu so với vé).`
+          : `Bán cho lái cá: ${keepnet.length} con, được ${earned} xu.`,
     )
     try {
       for (const c of keepnet) await repo.setCatchFate(c.id, fate)
@@ -230,6 +271,28 @@ export const useGame = create<Store>((set, get) => ({
     } catch (e) {
       set({ repoError: `Chưa lưu được kết quả ca lên server: ${errText(e)}` })
     }
+  },
+
+  throwChum() {
+    const { cfg, game } = get()
+    if (game.phase !== 'ready' && game.phase !== 'result') return void get().toast('Nhấc cần lên rồi hẵng xả mồi.', 'error')
+    if (get().apply((p) => P.throwChum(p, cfg.location.id, Date.now()))) get().toast('Ném một nắm mồi xả. Ổ đậm thêm, cá sẽ tụ lại.')
+  },
+
+  setPrefs(p) {
+    const prefs = { ...get().prefs, ...p }
+    writePref('can-thu:prefs', JSON.stringify(prefs))
+    set({ prefs })
+    get().alerts.setSound(prefs.sound)
+  },
+
+  questsNow() {
+    const { player, now } = get()
+    return dailyQuests(dayKey(now), P.levelOf(player.xp))
+  },
+
+  claimQuest(q) {
+    if (get().apply((p) => P.claimQuest(p, q))) get().toast(`Nhận thưởng: +${q.rewardXu} xu, +${q.rewardXp} xp.`)
   },
 
   async enableNotifications() {
@@ -264,6 +327,67 @@ export const useGame = create<Store>((set, get) => ({
 }))
 
 // ---------------------------------------------------------------- side effects
+
+function readJson<T>(k: string): T | undefined {
+  try {
+    const raw = localStorage.getItem(k)
+    return raw ? (JSON.parse(raw) as T) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+const dayKey = (ms: number) => new Intl.DateTimeFormat('en-CA').format(ms)
+
+/** Ghi tiến độ nhiệm vụ ngày; xong nhiệm vụ nào thì báo. */
+function questEvent(e: QuestEvent) {
+  const st = useGame.getState()
+  const date = dayKey(Date.now())
+  const quests = dailyQuests(date, P.levelOf(st.player.xp))
+  const qs = P.questsToday(st.player, date).quests
+  const r = advanceQuests(qs, quests, e)
+  st.apply((p) => P.setQuests(P.questsToday(p, date), r.state))
+  for (const q of r.completed) st.toast(`Xong nhiệm vụ: ${q.text}. Nhận thưởng ở mục Nhiệm vụ.`)
+}
+
+/** Sinh vật ghé qua: hẹn lượt kế tiếp, hiện khi tới giờ, ghi vào sổ "Sinh vật đã gặp". */
+function tickWildlife(t: number) {
+  const st = useGame.getState()
+  const { session, cfg, visitor, visits } = st
+  if (!session) return
+  if (visitor && t > visitor.at + visitor.untilMs) useGame.setState({ visitor: undefined })
+  let next = st.nextVisit
+  // null = giờ này ở đây không có con nào: một phút sau thử lại (giờ, thời tiết có thể đã khác)
+  if (next === undefined || (next === null && t >= wildlifeRetryAt)) {
+    wildlifeRetryAt = t + 60_000
+    const rng = createRng(hashStr(session.id) + visits * 7919)
+    next = nextVisit(rng, cfg.location.id, localHour(t), session.weather.kind, t, cfg.timeScale < 1 ? 0.05 : 1)
+    useGame.setState({ nextVisit: next })
+  }
+  if (next && t >= next.at && !visitor) {
+    const creature = CREATURES.find((c) => c.id === next.creatureId)!
+    const isNew = !st.sightings.some((s) => s.creatureId === creature.id)
+    useGame.setState((s) => ({
+      visitor: next,
+      nextVisit: undefined,
+      visits: s.visits + 1,
+      sightings: isNew
+        ? [...s.sightings, { creatureId: creature.id, firstLocation: cfg.location.id, firstSeenAt: t, lastSeenAt: t, timesSeen: 1 }]
+        : s.sightings.map((x) => (x.creatureId === creature.id ? { ...x, lastSeenAt: t, timesSeen: x.timesSeen + 1 } : x)),
+    }))
+    if (isNew) st.toast(`Lần đầu gặp: ${creature.nameVi}. Đã ghi vào sổ tay.`)
+    questEvent({ type: 'sighting' })
+    void st.repo.recordSighting(creature.id, cfg.location.id, t).catch(() => undefined)
+  }
+}
+
+let wildlifeRetryAt = 0
+
+function hashStr(s: string): number {
+  let h = 2166136261
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619)
+  return h >>> 0
+}
 
 function readPref(k: string): string | null {
   try {
@@ -397,6 +521,7 @@ async function saveCatch(g: GameState) {
     handbook: optimisticHandbook(s.handbook, record),
     notifyPrompt: firstEver && !player.notifyAsked && typeof Notification !== 'undefined' && Notification.permission === 'default',
   }))
+  questEvent({ type: 'catch', speciesId: fish.speciesId, weightG: fish.weightG, locationId: session.locationId })
   st.toast(`${sp.nameVi} ${kg(fish.weightG)} kg, vào rọng.`)
   if (isNew) st.toast(`Trang mới trong sổ tay: ${sp.nameVi}.`)
   else if (fish.weightG > prevRecord) st.toast(`${sp.nameVi} ${kg(fish.weightG)} kg: kỷ lục mới của bạn.`)
@@ -420,4 +545,5 @@ function optimisticHandbook(h: HandbookEntry[], c: CatchRecord): HandbookEntry[]
   )
 }
 
-export { HOUR_MS, kg }
+export { dayKey, HOUR_MS, kg }
+export type { Location }

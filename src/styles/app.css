@@ -126,13 +126,28 @@ button:focus-visible {
 .float-view svg {
   display: block;
 }
-.float-view--inset svg {
+.float-view svg {
+  display: block;
+}
+/* khung phao: 3 cỡ (Cài đặt), giữ tỉ lệ 120:320 */
+.float-frame--inset.float-frame--s {
+  width: 84px;
+  height: 224px;
+}
+.float-frame--inset.float-frame--m {
   width: 120px;
   height: 320px;
 }
-.float-view--full svg {
+.float-frame--inset.float-frame--l {
+  width: 160px;
+  height: 427px;
+}
+.float-frame--full {
   height: min(56vh, 520px);
-  width: auto;
+  aspect-ratio: 120 / 320;
+}
+.float-frame .float-view {
+  height: 100%;
 }
 
 .action {
@@ -233,7 +248,7 @@ button:focus-visible {
 .toasts {
   position: fixed;
   z-index: 5;
-  top: 16px;
+  top: 84px;
   left: 50%;
   transform: translateX(-50%);
   display: grid;
@@ -338,7 +353,8 @@ button:focus-visible {
   .topbar {
     flex-direction: column;
   }
-  .float-view--inset svg {
+  .float-frame--inset.float-frame--m,
+  .float-frame--inset.float-frame--l {
     width: 90px;
     height: 240px;
   }
@@ -581,4 +597,109 @@ button:focus-visible {
 }
 .notify-prompt p {
   margin: 0 0 8px;
+}
+
+/* ---------------------------------------------------------------- M3 */
+.badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+.dialog--wide {
+  width: min(720px, 100%);
+}
+.loc-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.loc-card {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  color: #f6f1e7;
+  min-height: 110px;
+  align-content: end;
+}
+.loc-card strong {
+  font-size: 17px;
+}
+.loc-card__kind {
+  font-size: 12px;
+  opacity: 0.85;
+}
+.loc-card--fee_pond {
+  background: linear-gradient(160deg, #2b6f86, #1d5c73 60%, #3f6b3a);
+}
+.loc-card--river {
+  background: linear-gradient(160deg, #7a8a55, #4a5a3a 60%, #5b4630);
+}
+.loc-card--mountain {
+  background: linear-gradient(160deg, #6f8a78, #123c52 70%);
+}
+.loc-card.is-active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--primary);
+}
+.loc-card.is-locked {
+  filter: grayscale(0.7);
+  opacity: 0.7;
+}
+.action__secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+.ghost--small {
+  padding: 5px 12px;
+  font-size: 13px;
+}
+.choice--inline {
+  width: auto;
+}
+.fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.fieldset legend {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.lab__body {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 16px;
+  margin-top: 12px;
+  align-items: start;
+}
+.lab__float {
+  height: 320px;
+}
+.fish-shadow {
+  animation: fish-sway 1.6s ease-in-out infinite alternate;
+}
+@keyframes fish-sway {
+  to {
+    transform: translateX(-10px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fish-shadow {
+    animation: none;
+  }
 }

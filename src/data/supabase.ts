@@ -6,6 +6,7 @@ import type {
   HandbookEntry,
   SessionOutcome,
   SessionRecord,
+  Sighting,
   StoredPlayer,
   WeatherKind,
 } from './types'
@@ -146,6 +147,23 @@ export class SupabaseRepository implements GameRepository {
       bait: r.bait,
       rig: r.rig,
       fate: r.fate,
+    }))
+  }
+
+  async recordSighting(creatureId: string, locationId: string, seenAt: number) {
+    const { error } = await this.db.rpc('record_sighting', { p_creature_id: creatureId, p_location_id: locationId, p_seen_at: iso(seenAt) })
+    if (error) throw error
+  }
+
+  async sightings(): Promise<Sighting[]> {
+    const { data, error } = await this.db.from('wildlife_sightings').select('*')
+    if (error) throw error
+    return (data ?? []).map((r) => ({
+      creatureId: r.creature_id,
+      firstLocation: r.first_location,
+      firstSeenAt: Date.parse(r.first_seen_at),
+      lastSeenAt: Date.parse(r.last_seen_at),
+      timesSeen: r.times_seen,
     }))
   }
 

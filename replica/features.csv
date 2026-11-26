@@ -3,9 +3,9 @@ Chơi ngay bằng tài khoản khách,onboarding,must,yes,yes,Bản gốc có 3 
 Liên kết Google/email để giữ tiến độ,account,must,yes,partial,"Supabase Auth; bản gốc dùng Google hoặc user+mật khẩu; đã code, chưa chạy thử vì chưa có project Supabase"
 Lưu tiến độ lên server,account,must,partial,partial,Bản gốc mặc định lưu localStorage; đã code + hàng đợi offline; chưa chạy thử với Supabase thật
 Hướng dẫn trong lúc chơi (quăng/canh/giật/vớt),onboarding,must,yes,yes,Coach bar 4 bước
-Chọn địa điểm câu,locations,must,yes,partial,Bản gốc 8 hồ dịch vụ; mình 3 địa điểm khác loại; 1 địa điểm ở M2; thêm 2 ở M3
+Chọn địa điểm câu,locations,must,yes,yes,"3 địa điểm: hồ dịch vụ, sông, hồ núi"
 Vé ca câu theo giờ (hồ dịch vụ),locations,must,yes,yes,Bản gốc 3–8 tiếng giờ game; mình theo giờ thật 1/2/4 tiếng
-Địa điểm tự nhiên miễn phí (sông/hồ núi),locations,must,no,no,Điểm khác biệt
+Địa điểm tự nhiên miễn phí (sông/hồ núi),locations,must,no,yes,Điểm khác biệt
 Đồng hồ theo giờ thật,world,must,no,yes,Bản gốc dùng giờ game tua nhanh
 Thời tiết + nhiệt độ nước ảnh hưởng cá,world,must,yes,yes,
 Quăng có lực (giữ - thả),core,must,yes,yes,
@@ -25,20 +25,20 @@ Rọng + kết thúc ca cân cá bán tiền,economy,must,yes,yes,
 Sổ tay: danh mục loài + nhật ký từng con,handbook,must,partial,yes,Bản gốc chỉ có ??? + nhật ký; mình có đặc tính đời thật
 Cửa hàng đồ nghề cơ bản (cần/dây/lưỡi/phao/mồi),economy,must,yes,partial,"cần, dây, phao, nguyên liệu mồi; chưa có lưỡi"
 Cảnh 3D ngồi câu,visual,should,yes,yes,
-Camera tự zoom vào phao khi có cá rỉa,visual,should,no,no,
-Góc nhìn rộng toàn cảnh,visual,should,yes,no,
-Động vật ghé qua theo địa điểm/giờ/thời tiết,visual,should,no,no,
-Sổ tay: Sinh vật đã gặp,handbook,should,no,no,
-Kho nhịp phao xem thử + tập giật,handbook,should,yes,no,
-Nhìn xuyên nước (chế độ học),core,should,yes,no,
-Mồi xả mở ổ / ổ nguội dần,core,should,yes,no,
-Mồi rã theo thời gian,core,should,yes,no,
+Camera tự zoom vào phao khi có cá rỉa,visual,should,no,yes,
+Góc nhìn rộng toàn cảnh,visual,should,yes,yes,
+Động vật ghé qua theo địa điểm/giờ/thời tiết,visual,should,no,yes,
+Sổ tay: Sinh vật đã gặp,handbook,should,no,yes,
+Kho nhịp phao xem thử + tập giật,handbook,should,yes,yes,
+Nhìn xuyên nước (chế độ học),core,should,yes,yes,
+Mồi xả mở ổ / ổ nguội dần,core,should,yes,yes,
+Mồi rã theo thời gian,core,should,yes,yes,
 Túi đồ đổi nhanh,economy,should,yes,yes,
-Cấp độ/XP mở khoá địa điểm và đồ,economy,should,partial,partial,Bản gốc khoá theo độ cứng cần; có cấp và XP; mở khoá theo cấp làm ở M3
-Nhiệm vụ ngày,economy,should,yes,no,
+Cấp độ/XP mở khoá địa điểm và đồ,economy,should,partial,yes,"sông cấp 2, hồ núi cấp 4; cần/dây/phao có cấp tối thiểu"
+Nhiệm vụ ngày,economy,should,yes,yes,
 Kỷ lục cá to nhất theo loài,handbook,should,yes,yes,
-Cài đặt chất lượng đồ hoạ Thấp/Vừa/Cao,settings,should,no,no,
-Cài đặt cỡ khung phao / kiểu kéo cá,settings,should,yes,no,
+Cài đặt chất lượng đồ hoạ Thấp/Vừa/Cao,settings,should,no,yes,
+Cài đặt cỡ khung phao / kiểu kéo cá,settings,should,yes,partial,cỡ khung phao có; kiểu kéo cá mới có một kiểu (giữ để ghì)
 Thành tích có bậc,meta,could,yes,no,Bản gốc 101 bậc / 34 danh hiệu
 Mặt cắt 2D,visual,could,yes,no,
 Hàng xóm NPC câu cá quanh hồ,visual,could,yes,no,

@@ -49,6 +49,14 @@ export interface HandbookEntry {
   favouriteHour: number
 }
 
+export interface Sighting {
+  creatureId: string
+  firstLocation: string
+  firstSeenAt: number
+  lastSeenAt: number
+  timesSeen: number
+}
+
 export interface StoredPlayer {
   version: number
   coins: number
@@ -77,6 +85,8 @@ export interface GameRepository {
   setCatchFate(id: string, fate: CatchRecord['fate']): Promise<void>
   handbook(): Promise<HandbookEntry[]>
   recentCatches(limit: number): Promise<CatchRecord[]>
+  recordSighting(creatureId: string, locationId: string, seenAt: number): Promise<void>
+  sightings(): Promise<Sighting[]>
   account(): Promise<Account>
   linkGoogle(): Promise<void>
   /** Gửi thư xác nhận; tài khoản thành chính thức khi bấm link trong thư. */

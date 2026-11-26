@@ -10,6 +10,7 @@ type Op =
   | { op: 'endSession'; id: string; endedAt: number; outcome: SessionOutcome; earnedCoins: number }
   | { op: 'recordCatch'; c: CatchRecord }
   | { op: 'setCatchFate'; id: string; fate: CatchRecord['fate'] }
+  | { op: 'recordSighting'; creatureId: string; locationId: string; seenAt: number }
 
 type Store = Pick<Storage, 'getItem' | 'setItem'>
 
@@ -81,6 +82,8 @@ export class OutboxRepository implements GameRepository {
         return this.inner.recordCatch(o.c)
       case 'setCatchFate':
         return this.inner.setCatchFate(o.id, o.fate)
+      case 'recordSighting':
+        return this.inner.recordSighting(o.creatureId, o.locationId, o.seenAt)
     }
   }
 
@@ -133,6 +136,25 @@ export class OutboxRepository implements GameRepository {
     }
     const ids = new Set(remote.map((c) => c.id))
     return [...queued.filter((c) => !ids.has(c.id)), ...remote].sort((a, b) => b.caughtAt - a.caughtAt).slice(0, limit)
+  }
+  recordSighting(creatureId: string, locationId: string, seenAt: number) {
+    return this.enqueue({ op: 'recordSighting', creatureId, locationId, seenAt })
+  }
+  async sightings() {
+    const queued = this.pending().flatMap((o) => (o.op === 'recordSighting' ? [o] : []))
+    let remote: Awaited<ReturnType<GameRepository['sightings']>> = []
+    try {
+      remote = await this.inner.sightings()
+    } catch {
+      /* offline */
+    }
+    const seen = new Set(remote.map((s) => s.creatureId))
+    for (const q of queued) {
+      if (seen.has(q.creatureId)) continue
+      seen.add(q.creatureId)
+      remote.push({ creatureId: q.creatureId, firstLocation: q.locationId, firstSeenAt: q.seenAt, lastSeenAt: q.seenAt, timesSeen: 1 })
+    }
+    return remote
   }
   account() {
     return this.inner.account()

@@ -5,6 +5,7 @@ import {
   type GameRepository,
   type SessionOutcome,
   type SessionRecord,
+  type Sighting,
   type StoredPlayer,
 } from './types'
 
@@ -12,6 +13,7 @@ interface LocalData {
   sessions: (SessionRecord & { endedAt?: number; outcome?: SessionOutcome; earnedCoins?: number })[]
   catches: CatchRecord[]
   player: StoredPlayer | null
+  sightings?: Sighting[]
 }
 
 /** Lưu trên máy (localStorage). Dùng khi chưa cấu hình Supabase, và cho test. */
@@ -102,6 +104,19 @@ export class LocalRepository implements GameRepository {
 
   async recentCatches(limit: number) {
     return [...this.read().catches].sort((a, b) => b.caughtAt - a.caughtAt).slice(0, limit)
+  }
+
+  async recordSighting(creatureId: string, locationId: string, seenAt: number) {
+    this.update((d) => {
+      d.sightings ??= []
+      const x = d.sightings.find((s) => s.creatureId === creatureId)
+      if (x) Object.assign(x, { lastSeenAt: Math.max(x.lastSeenAt, seenAt), timesSeen: x.timesSeen + 1 })
+      else d.sightings.push({ creatureId, firstLocation: locationId, firstSeenAt: seenAt, lastSeenAt: seenAt, timesSeen: 1 })
+    })
+  }
+
+  async sightings() {
+    return this.read().sightings ?? []
   }
 
   async account(): Promise<Account> {
