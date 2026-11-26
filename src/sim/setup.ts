@@ -19,6 +19,11 @@ export interface Setup {
   waterTempC: number
   /** sức chịu của bộ cần + dây; trận kéo đứt khi lực vượt mức này */
   strength: number
+  /** sức chịu riêng của cần và của dây (strength = tích hai số này); quá tải thì phần yếu hơn hỏng trước */
+  rodStrength?: number
+  lineStrength?: number
+  /** cần đang lắp, để biết cần nào gãy */
+  rodId?: string
   castBonusM: number
   /** độ đậm của ổ mồi xả ở chỗ đang câu, 0..1 (đã tính phân rã theo thời gian) */
   chum?: number

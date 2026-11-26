@@ -101,6 +101,21 @@ export function equip(p: PlayerState, kind: Kind, id: string): Op {
   return ok({ ...p, equipped: { ...p.equipped, [slot[kind]]: id } })
 }
 
+/**
+ * Cần gãy thì bỏ khỏi túi. Lắp lại cần khoẻ nhất còn lại; hết sạch cần thì cấp lại cần tre khởi đầu
+ * (miễn phí), để người chơi không bao giờ phải ngồi bờ không cần.
+ */
+export function breakRod(p: PlayerState, rodId: string): PlayerState {
+  const rods = p.owned.rods.filter((id) => id !== rodId)
+  if (rods.length === 0) rods.push(GEAR.starter.rod)
+  const keep = rods.includes(p.equipped.rod) ? p.equipped.rod : strongestRod(rods)
+  return { ...p, owned: { ...p.owned, rods }, equipped: { ...p.equipped, rod: keep } }
+}
+
+function strongestRod(ids: readonly string[]): string {
+  return ids.reduce((best, id) => (rodOf(id).strength > rodOf(best).strength ? id : best))
+}
+
 export function buyIngredient(p: PlayerState, id: string): Op {
   const ing = BAIT.ingredients.find((x) => x.id === id)
   if (!ing) return fail('Không có nguyên liệu này.')
@@ -196,6 +211,9 @@ export function setupFor(p: PlayerState, loc: Location, waterTempC: number, t = 
     depthCm: p.depthCm[loc.id] ?? null,
     waterTempC,
     strength: rod.strength * line.strength,
+    rodStrength: rod.strength,
+    lineStrength: line.strength,
+    rodId: rod.id,
     castBonusM: rod.castBonusM,
     chum: t ? chumLevel(p, loc.id, t) : 0,
   }

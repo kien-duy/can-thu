@@ -3,11 +3,11 @@
  *
  *   ready ─giữ─▶ charging ─thả─▶ sinking ─▶ waiting ─giật đúng─▶ fighting ⇄ landable ─vớt─▶ result(landed)
  *                                              └─giật sai / cá bỏ đi──────────▶ result(missed)
- *                                                      fighting ─đứt / sổng─▶ result(lost)
+ *                                                      fighting ─đứt / gãy cần / sổng─▶ result(lost)
  */
 import { type Location, type Species, speciesOf } from '../content'
 import { judgeStrike, planSpeciesBite, type SpeciesBitePlan } from './bite'
-import { advanceFight, type FightState, initFight, outcomeOf, STEP_MS } from './fight'
+import { advanceFight, brokenPart, type FightState, initFight, outcomeOf, STEP_MS } from './fight'
 import { createRng } from './rng'
 import type { Setup } from './setup'
 
@@ -44,6 +44,7 @@ export type Result =
   | { kind: 'gone'; speciesId: string }
   | { kind: 'bait_gone' }
   | { kind: 'broke'; speciesId: string; weightG: number }
+  | { kind: 'rod_broke'; speciesId: string; weightG: number; rodId?: string }
   | { kind: 'escaped'; speciesId: string }
 
 export type Phase = 'ready' | 'charging' | 'sinking' | 'waiting' | 'fighting' | 'landable' | 'result'
@@ -52,7 +53,7 @@ export interface GameState {
   phase: Phase
   casts: number
   chargeStartedAt?: number
-  cast?: { at: number; settledAt: number; distanceM: number; power: number; strength: number }
+  cast?: { at: number; settledAt: number; distanceM: number; power: number; strength: number; rodStrength?: number; lineStrength?: number; rodId?: string }
   bite?: SpeciesBitePlan
   fight?: FightState
   reeling: boolean
@@ -104,7 +105,7 @@ export function reduce(cfg: GameConfig, s: GameState, e: GameEvent): GameState {
         phase: 'sinking',
         casts: s.casts + 1,
         chargeStartedAt: undefined,
-        cast: { at: e.t, settledAt, distanceM: dMin + (dMax - dMin) * power + (e.setup?.castBonusM ?? 0) * power, power, strength: e.setup?.strength ?? 1 },
+        cast: { at: e.t, settledAt, distanceM: dMin + (dMax - dMin) * power + (e.setup?.castBonusM ?? 0) * power, power, strength: e.setup?.strength ?? 1, rodStrength: e.setup?.rodStrength ?? 1, lineStrength: e.setup?.lineStrength ?? 1, rodId: e.setup?.rodId },
         bite,
         lastTick: e.t,
       }
@@ -122,7 +123,7 @@ export function reduce(cfg: GameConfig, s: GameState, e: GameEvent): GameState {
         return {
           ...s,
           phase: 'fighting',
-          fight: initFight(sp, bite.weightG, s.cast!.distanceM, cfg.seed ^ (s.casts * 104729), s.cast!.strength),
+          fight: initFight(sp, bite.weightG, s.cast!.distanceM, cfg.seed ^ (s.casts * 104729), s.cast!.strength, s.cast!.rodStrength ?? 1, s.cast!.lineStrength ?? 1),
           reeling: false,
           lastTick: e.t,
         }
@@ -178,7 +179,13 @@ function tick(_cfg: GameConfig, s: GameState, t: number, paused: boolean): GameS
     if (consumed === 0) return s
     const fight = advanceFight(s.fight, consumed, s.reeling)
     const o = outcomeOf(fight)
-    if (o === 'broke') return { ...s, fight, phase: 'result', result: { kind: 'broke', speciesId: fight.speciesId, weightG: fight.weightG }, lastTick: nextTick }
+    if (o === 'broke') {
+      const result: Result =
+        brokenPart(fight) === 'rod'
+          ? { kind: 'rod_broke', speciesId: fight.speciesId, weightG: fight.weightG, rodId: s.cast?.rodId }
+          : { kind: 'broke', speciesId: fight.speciesId, weightG: fight.weightG }
+      return { ...s, fight, phase: 'result', result, lastTick: nextTick }
+    }
     if (o === 'escaped') return { ...s, fight, phase: 'result', result: { kind: 'escaped', speciesId: fight.speciesId }, lastTick: nextTick }
     if (o === 'landable') return { ...s, fight, phase: 'landable', landableSince: t, reeling: false, lastTick: nextTick }
     return { ...s, fight, phase: 'fighting', lastTick: nextTick }

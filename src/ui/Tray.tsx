@@ -209,6 +209,11 @@ function GearTab() {
       <p className="muted">
         Sức chịu của bộ cần và dây: <strong>{Math.round(rod.strength * line.strength * 100)}%</strong> so với đồ khởi đầu. Mua thêm ở Cửa hàng.
       </p>
+      {line.strength > rod.strength && (
+        <p className="muted" role="note" data-testid="rod-risk">
+          Dây khoẻ hơn cần: quá tải thì cần gãy trước thẻo.
+        </p>
+      )}
       {groups.map((g) => (
         <section key={g.kind}>
           <h3>{g.title}</h3>

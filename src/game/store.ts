@@ -1,6 +1,6 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand'
 import { Alerts } from '../alerts/alerts'
-import { CREATURES, type Location, LOCATIONS, locationOf, SPECIES, speciesOf } from '../content'
+import { CREATURES, type Location, LOCATIONS, locationOf, rodOf, SPECIES, speciesOf } from '../content'
 import {
   type Account,
   type CatchRecord,
@@ -488,6 +488,11 @@ function onTransition(prev: GameState, next: GameState) {
   }
   if (next.phase === 'fighting' || next.phase === 'result') st.alerts.clear()
   if (next.phase === 'result' && prev.phase !== 'result' && next.result?.kind === 'landed') void saveCatch(next)
+  if (next.phase === 'result' && prev.phase !== 'result' && next.result?.kind === 'rod_broke') {
+    const broken = rodOf(next.result.rodId ?? st.player.equipped.rod)
+    st.apply((p) => P.breakRod(p, broken.id))
+    st.toast(`Rắc! Gãy cần ${broken.nameVi}. Đã lắp lại ${rodOf(useGame.getState().player.equipped.rod).nameVi}.`, 'error')
+  }
 }
 
 async function saveCatch(g: GameState) {

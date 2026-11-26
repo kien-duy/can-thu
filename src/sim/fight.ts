@@ -24,6 +24,9 @@ export interface FightState {
   surge: number
   /** sức chịu của bộ cần + dây (1 = đồ khởi đầu); lực vượt mức này là đứt */
   strength: number
+  /** sức chịu riêng của cần và của dây; quá tải thì phần yếu hơn hỏng trước (bằng nhau thì thẻo đứt) */
+  rodStrength: number
+  lineStrength: number
   /** dây đã quá tải liên tục bao lâu (ms); cần đỡ sốc được một nhịp, quá OVERLOAD_MS mới đứt */
   overloadMs: number
 }
@@ -37,7 +40,7 @@ export const STEP_MS = 50
 /** Cần đỡ sốc: dây phải quá tải liên tục ngần này mới đứt. Lớn hơn phản xạ người (~250 ms) để kịp thả tay. */
 export const OVERLOAD_MS = 400
 
-export function initFight(s: Species, weightG: number, distanceM: number, seed: number, strength = 1): FightState {
+export function initFight(s: Species, weightG: number, distanceM: number, seed: number, strength = 1, rodStrength = 1, lineStrength = 1): FightState {
   const size = Math.min(2.2, Math.max(0.4, weightG / s.typicalG))
   const [r, rng] = rngStep(seed)
   return {
@@ -55,6 +58,8 @@ export function initFight(s: Species, weightG: number, distanceM: number, seed: 
     staminaScale: s.fight.stamina * (0.5 + 0.5 * size),
     surge: s.fight.surge,
     strength,
+    rodStrength,
+    lineStrength,
     overloadMs: 0,
   }
 }
@@ -101,6 +106,14 @@ export function advanceFight(f: FightState, ms: number, reeling: boolean): Fight
     if (o === 'broke' || o === 'escaped') break
   }
   return s
+}
+
+/**
+ * Quá tải thì bộ đồ hỏng ở chỗ yếu nhất. Thẻo là điểm yếu được tính sẵn, nên bằng sức nhau thì thẻo đứt;
+ * chỉ khi cần yếu hơn dây (dây to lắp cần yếu) thì cần gãy trước.
+ */
+export function brokenPart(f: FightState): 'rod' | 'line' {
+  return f.rodStrength < f.lineStrength ? 'rod' : 'line'
 }
 
 export function isSurging(f: FightState): boolean {

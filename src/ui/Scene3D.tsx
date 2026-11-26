@@ -277,6 +277,7 @@ function RodAndLine() {
     return new THREE.Line(geo, new THREE.LineBasicMaterial({ color: '#f4f4f4', transparent: true, opacity: 0.7 }))
   }, [])
   const rod = useRef<THREE.Mesh>(null)
+  const tip = useRef<THREE.Mesh>(null)
   useFrame(({ clock }) => {
     const { game, now } = useGame.getState()
     const pos = line.geometry.attributes.position as THREE.BufferAttribute
@@ -295,6 +296,12 @@ function RodAndLine() {
       const bend = game.phase === 'fighting' || game.phase === 'landable' ? Math.min(1.2, game.fight?.tension ?? 0) * 0.35 : 0
       const charge = game.phase === 'charging' && game.chargeStartedAt ? Math.min(1, (now - game.chargeStartedAt) / 1200) * 0.6 : 0
       rod.current.rotation.x = -1.05 + bend + charge
+      // gãy cần: chỉ còn nửa dưới, nửa ngọn rũ xuống tới khi câu tiếp
+      const broken = game.phase === 'result' && game.result?.kind === 'rod_broke'
+      rod.current.position.set(0.35, 0.9, 0.4)
+      rod.current.scale.y = broken ? 0.5 : 1
+      if (broken) rod.current.translateY(-0.9)
+      if (tip.current) tip.current.visible = broken
     }
   })
   return (
@@ -302,6 +309,10 @@ function RodAndLine() {
       <primitive object={line} />
       <mesh ref={rod} position={[0.35, 0.9, 0.4]} rotation={[-1.05, 0, 0]}>
         <cylinderGeometry args={[0.008, 0.02, 3.6, 6]} />
+        <meshStandardMaterial color="#5b4630" />
+      </mesh>
+      <mesh ref={tip} visible={false} position={[0.35, 0.12, 0.2]} rotation={[0.25, 0, 0.15]}>
+        <cylinderGeometry args={[0.008, 0.014, 1.6, 6]} />
         <meshStandardMaterial color="#5b4630" />
       </mesh>
     </>
