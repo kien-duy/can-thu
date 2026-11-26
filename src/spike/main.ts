@@ -126,13 +126,21 @@ function save() {
   }
 }
 
-async function start(preset: string) {
+function start(preset: string) {
   // Cú click này là "cử chỉ người dùng": mở khoá âm thanh và xin quyền thông báo.
-  audio ??= new AudioContext()
-  await audio.resume().catch(() => undefined)
+  // Không await: trên vài trình duyệt (Firefox headless, máy không có thiết bị âm thanh)
+  // resume() có thể không bao giờ trả về; việc lên lịch không được phụ thuộc vào nó.
+  try {
+    audio ??= new AudioContext()
+    void audio.resume().catch(() => undefined)
+  } catch {
+    audio = undefined
+  }
   const wantNotify = $<HTMLInputElement>('#notify').checked
   if (wantNotify && typeof Notification !== 'undefined' && Notification.permission === 'default') {
-    await Notification.requestPermission().catch(() => undefined)
+    void Notification.requestPermission()
+      .catch(() => undefined)
+      .then(() => ($('#env').textContent = envText()))
   }
   $('#env').textContent = envText()
 
@@ -160,8 +168,8 @@ async function start(preset: string) {
   $('#status').textContent = `Đã lên lịch ${items.map((i) => i.id).join(', ')}. Giờ chuyển sang tab/ứng dụng khác và đợi.`
 }
 
-$('#start-fast').addEventListener('click', () => void start('nhanh'))
-$('#start-full').addEventListener('click', () => void start('day_du'))
+$('#start-fast').addEventListener('click', () => start('nhanh'))
+$('#start-full').addEventListener('click', () => start('day_du'))
 $('#copy').addEventListener('click', () => {
   const text = JSON.stringify({ ua: navigator.userAgent, rows }, null, 2)
   void navigator.clipboard.writeText(text).then(
