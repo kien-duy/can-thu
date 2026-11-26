@@ -1,47 +1,14 @@
-import { expect, type Page, test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 /**
  * M1 "done": từ lúc mở game tới lúc có một dòng trong sổ tay.
  * ?fast=1 thu nhỏ thời gian chờ; ?seed cố định loài và nhịp; ?store=local để không cần Supabase.
  */
-const app = (page: Page) => page.getByTestId('app')
-
-async function castLine(page: Page) {
-  const btn = page.getByTestId('primary')
-  await btn.hover()
-  await page.mouse.down()
-  await page.waitForTimeout(900)
-  await page.mouse.up()
-  await expect(app(page)).toHaveAttribute('data-phase', /sinking|waiting/)
-}
-
-async function fightUntilLandable(page: Page) {
-  const btn = page.getByTestId('primary')
-  await btn.hover()
-  let holding = false
-  for (let i = 0; i < 1200; i++) {
-    const phase = await app(page).getAttribute('data-phase')
-    if (phase === 'landable') {
-      if (holding) await page.mouse.up()
-      return
-    }
-    if (phase !== 'fighting') throw new Error(`trận kéo kết thúc ở pha ${phase}: ${await page.getByTestId('hint').textContent()}`)
-    const tension = Number(await app(page).getAttribute('data-tension'))
-    if (tension < 0.7 && !holding) {
-      await page.mouse.down()
-      holding = true
-    } else if (tension >= 0.7 && holding) {
-      await page.mouse.up()
-      holding = false
-    }
-    await page.waitForTimeout(50)
-  }
-  throw new Error('kéo quá lâu')
-}
+import { app, castLine, enterShift, fightUntilLandable } from './helpers'
 
 test('câu được con cá đầu tiên và thấy nó trong sổ tay', async ({ page }, info) => {
   test.setTimeout(90_000)
-  await page.goto('/?fast=1&seed=3&store=local')
+  await enterShift(page)
   await expect(page.getByTestId('primary')).toHaveText('Giữ để quăng')
   await page.screenshot({ path: info.outputPath('01-ready.png') })
 
@@ -65,14 +32,18 @@ test('câu được con cá đầu tiên và thấy nó trong sổ tay', async (
   await expect(caught.getByText('Đã câu')).toBeVisible()
   await page.screenshot({ path: info.outputPath('04-handbook.png') })
 
-  // tải lại trang: sổ tay vẫn còn (lưu trên máy)
+  // tải lại trang: sổ tay vẫn còn, ca câu và rọng được khôi phục
   await page.reload()
+  await expect(app(page)).toHaveAttribute('data-shift', 'on')
+  await expect(page.getByText(/Rọng: 1 con/)).toBeVisible()
   await page.getByTestId('open-handbook').click()
   await expect(page.locator('[data-caught="yes"]')).toHaveCount(1)
+  await page.getByRole('tab', { name: 'Nhật ký câu' }).click()
+  await expect(page.getByTestId('journal').locator('tbody tr')).toHaveCount(1)
 })
 
 test('giật lúc cá mới rỉa là sớm', async ({ page }) => {
-  await page.goto('/?fast=1&seed=3&store=local')
+  await enterShift(page)
   await castLine(page)
   await expect(app(page)).toHaveAttribute('data-wait', 'nibbling', { timeout: 20_000 })
   await page.keyboard.press('Space')
@@ -80,7 +51,8 @@ test('giật lúc cá mới rỉa là sớm', async ({ page }) => {
 })
 
 test('chế độ văn phòng không vẽ 3D', async ({ page }) => {
-  await page.goto('/?store=local')
+  await enterShift(page, '/?store=local')
+  await page.getByText('Thêm').click()
   await page.getByRole('button', { name: 'Chế độ văn phòng' }).click()
   await expect(page.locator('canvas')).toHaveCount(0)
   await expect(page.getByLabel('Cận cảnh phao')).toBeVisible()

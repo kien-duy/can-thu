@@ -22,6 +22,10 @@ export interface FightState {
   power: number
   staminaScale: number
   surge: number
+  /** sức chịu của bộ cần + dây (1 = đồ khởi đầu); lực vượt mức này là đứt */
+  strength: number
+  /** dây đã quá tải liên tục bao lâu (ms); cần đỡ sốc được một nhịp, quá OVERLOAD_MS mới đứt */
+  overloadMs: number
 }
 
 export type FightOutcome = 'fighting' | 'landable' | 'broke' | 'escaped'
@@ -30,8 +34,10 @@ export const LANDABLE_DISTANCE_M = 3
 export const LANDABLE_STAMINA = 0.25
 export const ESCAPE_DISTANCE_M = 25
 export const STEP_MS = 50
+/** Cần đỡ sốc: dây phải quá tải liên tục ngần này mới đứt. Lớn hơn phản xạ người (~250 ms) để kịp thả tay. */
+export const OVERLOAD_MS = 400
 
-export function initFight(s: Species, weightG: number, distanceM: number, seed: number): FightState {
+export function initFight(s: Species, weightG: number, distanceM: number, seed: number, strength = 1): FightState {
   const size = Math.min(2.2, Math.max(0.4, weightG / s.typicalG))
   const [r, rng] = rngStep(seed)
   return {
@@ -48,6 +54,8 @@ export function initFight(s: Species, weightG: number, distanceM: number, seed: 
     power: Math.min(0.85, s.fight.power * (0.55 + 0.45 * size)),
     staminaScale: s.fight.stamina * (0.5 + 0.5 * size),
     surge: s.fight.surge,
+    strength,
+    overloadMs: 0,
   }
 }
 
@@ -64,18 +72,21 @@ function step(f: FightState, reeling: boolean): FightState {
   }
   const surging = elapsedMs < surgeUntil
   const pull = f.power * (0.35 + 0.65 * f.stamina) * (surging ? 1 + f.surge * 1.5 : 1)
-  const target = reeling ? pull + 0.45 : pull * 0.35
-  const tension = f.tension + (target - f.tension) * Math.min(1, dt * 4)
+  // độ căng hiển thị = lực trên dây ÷ sức chịu của bộ đồ (1 = sắp đứt)
+  const target = (reeling ? pull + 0.45 : pull * 0.35) / f.strength
+  // thả tay ("tay mềm") thì ngọn cần chùng ngay, lực tụt nhanh hơn lúc ghì lên
+  const tension = f.tension + (target - f.tension) * Math.min(1, dt * (reeling ? 4 : 10))
   let distanceM = f.distanceM
   if (reeling && tension < 0.95) distanceM -= 1.6 * (1 - 0.8 * pull) * dt
   if (!reeling) distanceM += pull * 1.2 * dt
   distanceM = Math.max(0.5, distanceM)
   const stamina = Math.max(0, f.stamina - (dt * (0.008 + 0.055 * tension)) / f.staminaScale)
-  return { ...f, rng, surgeUntil, nextSurgeAt, elapsedMs, pull, tension, distanceM, stamina }
+  const overloadMs = tension >= 1 ? f.overloadMs + STEP_MS : 0
+  return { ...f, rng, surgeUntil, nextSurgeAt, elapsedMs, pull, tension, distanceM, stamina, overloadMs }
 }
 
 export function outcomeOf(f: FightState): FightOutcome {
-  if (f.tension >= 1) return 'broke'
+  if (f.overloadMs >= OVERLOAD_MS) return 'broke'
   if (f.distanceM > ESCAPE_DISTANCE_M) return 'escaped'
   if (f.distanceM <= LANDABLE_DISTANCE_M && f.stamina <= LANDABLE_STAMINA) return 'landable'
   return 'fighting'

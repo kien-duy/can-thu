@@ -1,5 +1,14 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { CatchRecord, GameRepository, HandbookEntry, SessionRecord, WeatherKind } from './types'
+import type {
+  Account,
+  CatchRecord,
+  GameRepository,
+  HandbookEntry,
+  SessionOutcome,
+  SessionRecord,
+  StoredPlayer,
+  WeatherKind,
+} from './types'
 
 const iso = (ms: number) => new Date(ms).toISOString()
 
@@ -9,7 +18,13 @@ export class SupabaseRepository implements GameRepository {
   private readonly db: SupabaseClient
 
   constructor(url: string, anonKey: string) {
-    this.db = createClient(url, anonKey, { auth: { persistSession: true, autoRefreshToken: true } })
+    this.db = createClient(url, anonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })
+  }
+
+  private async uid(): Promise<string> {
+    const { data } = await this.db.auth.getSession()
+    if (!data.session) throw new Error('Chưa đăng nhập')
+    return data.session.user.id
   }
 
   async init() {
@@ -17,6 +32,44 @@ export class SupabaseRepository implements GameRepository {
     if (data.session) return
     const { error } = await this.db.auth.signInAnonymously()
     if (error) throw error
+  }
+
+  async loadPlayer(): Promise<StoredPlayer | null> {
+    const { data, error } = await this.db.from('player_state').select('version, coins, xp, state').eq('user_id', await this.uid()).maybeSingle()
+    if (error) throw error
+    return data ? { version: data.version, coins: data.coins, xp: data.xp, state: data.state } : null
+  }
+
+  async savePlayer(expectedVersion: number, p: Omit<StoredPlayer, 'version'>) {
+    const { data, error } = await this.db.rpc('save_player_state', {
+      p_expected_version: expectedVersion,
+      p_coins: p.coins,
+      p_xp: p.xp,
+      p_state: p.state,
+      p_state_schema: 1,
+    })
+    if (error) throw error
+    return data as number
+  }
+
+  async openSession(): Promise<SessionRecord | null> {
+    const { data, error } = await this.db.from('fishing_sessions').select('*').is('ended_at', null).maybeSingle()
+    if (error) throw error
+    if (!data) return null
+    return {
+      id: data.id,
+      locationId: data.location_id,
+      kind: data.kind,
+      ticketCoins: data.ticket_coins,
+      startedAt: Date.parse(data.started_at),
+      plannedEndAt: data.planned_end_at ? Date.parse(data.planned_end_at) : undefined,
+      weather: {
+        kind: data.weather.kind ?? 'sunny',
+        tempC: data.weather.temp_c ?? 27,
+        windMs: data.weather.wind_ms ?? 1,
+        waterTempC: data.weather.water_temp_c ?? 26,
+      },
+    }
   }
 
   async startSession(s: SessionRecord) {
@@ -27,13 +80,13 @@ export class SupabaseRepository implements GameRepository {
       p_ticket_coins: s.ticketCoins,
       p_started_at: iso(s.startedAt),
       p_planned_end_at: s.plannedEndAt === undefined ? null : iso(s.plannedEndAt),
-      p_weather: {
-        kind: s.weather.kind,
-        temp_c: s.weather.tempC,
-        wind_ms: s.weather.windMs,
-        water_temp_c: s.weather.waterTempC,
-      },
+      p_weather: { kind: s.weather.kind, temp_c: s.weather.tempC, wind_ms: s.weather.windMs, water_temp_c: s.weather.waterTempC },
     })
+    if (error) throw error
+  }
+
+  async endSession(id: string, endedAt: number, outcome: SessionOutcome, earnedCoins: number) {
+    const { error } = await this.db.rpc('end_session', { p_id: id, p_ended_at: iso(endedAt), p_outcome: outcome, p_earned_coins: earnedCoins })
     if (error) throw error
   }
 
@@ -54,6 +107,11 @@ export class SupabaseRepository implements GameRepository {
         fate: c.fate,
       },
     })
+    if (error) throw error
+  }
+
+  async setCatchFate(id: string, fate: CatchRecord['fate']) {
+    const { error } = await this.db.rpc('set_catch_fate', { p_id: id, p_fate: fate })
     if (error) throw error
   }
 
@@ -89,5 +147,31 @@ export class SupabaseRepository implements GameRepository {
       rig: r.rig,
       fate: r.fate,
     }))
+  }
+
+  async account(): Promise<Account> {
+    const { data } = await this.db.auth.getUser()
+    const u = data.user
+    if (!u) return { mode: 'guest', providers: [] }
+    const providers = (u.identities ?? []).map((i) => i.provider)
+    return { mode: u.is_anonymous ? 'guest' : 'linked', email: u.email ?? undefined, providers }
+  }
+
+  async linkGoogle() {
+    // Cần bật "Manual linking" trong Supabase. Trình duyệt chuyển sang Google rồi quay về, user_id giữ nguyên.
+    const { error } = await this.db.auth.linkIdentity({ provider: 'google', options: { redirectTo: location.origin + location.pathname } })
+    if (error) throw error
+  }
+
+  async linkEmail(email: string) {
+    const { error } = await this.db.auth.updateUser({ email }, { emailRedirectTo: location.origin + location.pathname })
+    if (error) throw error
+  }
+
+  async deleteAccount() {
+    // Xoá user cần service role: làm ở Edge Function (supabase/functions/delete-account).
+    const { error } = await this.db.functions.invoke('delete-account', { method: 'POST' })
+    if (error) throw error
+    await this.db.auth.signOut()
   }
 }

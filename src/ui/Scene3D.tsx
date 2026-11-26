@@ -124,7 +124,7 @@ function Water() {
 
 export function Scene3D() {
   const hour = useGame((s) => localHour(Math.floor(s.now / 600_000) * 600_000)) // đổi vị trí mặt trời mỗi 10 phút
-  const visible = useGame((s) => s.handbookOpen) // vẫn vẽ phía sau bảng
+  const visible = useGame((s) => s.panel !== null || s.shiftOver || !s.session) // có bảng che: vẽ thưa lại
   return (
     <Canvas
       className="scene"

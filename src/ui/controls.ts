@@ -38,7 +38,7 @@ export function useKeyboard() {
         primaryDown()
       }
       if (e.code === 'KeyE' && useGame.getState().game.phase === 'landable') primaryDown()
-      if (e.code === 'Escape') useGame.getState().toggleHandbook(false)
+      if (e.code === 'Escape') useGame.getState().openPanel(null)
     }
     const up = (e: KeyboardEvent) => {
       if (e.code === 'Space') {

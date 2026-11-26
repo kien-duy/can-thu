@@ -2,9 +2,11 @@
 
 Game câu đài 3D trên web cho người vừa làm việc vừa muốn câu. Bạn thả câu rồi quay lại làm việc; khi cá bắt đầu rỉa mồi, game báo cho bạn quay lại.
 
-Trạng thái: **M1**, bản dựng thô chơi được: quăng, đọc phao, giật, kéo, vớt, rồi xem cá trong sổ tay. Có 1 địa điểm (Hồ Đồng Xanh) và 3 loài (rô phi đen, điêu hồng, chép). Khi tab ẩn, tiêu đề tab đổi và có tiếng "tách" lúc cá rỉa mồi.
+Trạng thái: **M2**. Vào ca ở Hồ Đồng Xanh (vé 1, 2 hoặc 4 tiếng theo giờ thật), dò đáy, chọn kiểu cân, trộn mồi theo bài gợi ý hoặc tự trộn, quăng, đọc phao, giật, kéo, vớt. Hết ca thì bán cá theo kg hoặc thả lại hồ. Có cửa hàng (cần, dây, phao, nguyên liệu mồi), cấp độ, sổ tay 8 loài kèm nhật ký câu, liên kết tài khoản, xoá tài khoản. Khi tab ẩn: tiêu đề tab đổi, có tiếng báo, và thông báo hệ thống nếu bạn cho phép (game hỏi sau con cá đầu tiên).
 
-- `?fast=1`: thu nhỏ thời gian chờ, để thử nhanh.
+Mồi, độ sâu, kiểu cân, nhiệt độ nước, giờ trong ngày, dây và phao đều ảnh hưởng loài nào cắn, bao lâu cá tới và phao báo to hay nhỏ (`src/sim/setup.ts`).
+
+- `?fast=1`: thu nhỏ thời gian chờ, và 1 "giờ" vé = 60 giây, để thử nhanh.
 - `?seed=123`: lượt câu tái hiện được.
 - `?store=local`: lưu trên máy dù đã cấu hình Supabase.
 
@@ -23,10 +25,11 @@ npm run check        # typecheck + lint + unit test + build + e2e: chạy trư�
 
 ## Bật lưu lên server (Supabase)
 
-1. Tạo project Supabase. Vào Authentication → Sign In / Providers, bật **Anonymous sign-ins**.
+1. Tạo project Supabase. Vào Authentication → Sign In / Providers, bật **Anonymous sign-ins** và **Allow manual linking** (để khách liên kết Google/email). Muốn liên kết Google thì bật thêm provider Google.
 2. SQL Editor: chạy `supabase/migrations/0001_init.sql`, rồi `supabase/seed.sql`.
 3. Chép `.env.example` thành `.env.local`, điền `VITE_SUPABASE_URL` và `VITE_SUPABASE_ANON_KEY` (key anon/publishable).
-4. `npm run dev`: góc trái sẽ ghi "Đang lưu lên server".
+4. Xoá tài khoản cần Edge Function: `supabase functions deploy delete-account` (file `supabase/functions/delete-account/index.ts`).
+5. `npm run dev`: góc trái sẽ ghi "Đang lưu lên server". Mất mạng thì cá và ca câu nằm trong hàng đợi trên máy, có mạng lại thì tự gửi.
 
 Sửa `content/*.json` thì chạy `npm run seed:gen` để sinh lại `supabase/seed.sql` (có test bắt lỗi nếu quên).
 
@@ -34,10 +37,11 @@ Sửa `content/*.json` thì chạy `npm run seed:gen` để sinh lại `supabase
 
 | thư mục | nội dung |
 | --- | --- |
-| `content/` | dữ liệu game: loài, địa điểm (kiểm tra bằng zod) |
+| `content/` | dữ liệu game: loài, địa điểm, mồi, đồ nghề, kiểu cân (kiểm tra bằng zod) |
 | `src/sim/` | lõi mô phỏng, TypeScript thuần, tất định: phao, cá cắn, kéo cá, đồng hồ, thời tiết |
-| `src/data/` | `GameRepository`: bản lưu trên máy và bản Supabase |
-| `src/ui/`, `src/game/` | cảnh 3D (React Three Fiber), khung phao SVG, HUD, sổ tay; store Zustand |
+| `src/data/` | `GameRepository`: bản lưu trên máy, bản Supabase, hàng đợi offline |
+| `src/game/` | tiến độ người chơi (xu, xp, túi đồ, mồi) dạng hàm thuần; store Zustand |
+| `src/ui/` | cảnh 3D (React Three Fiber), khung phao SVG, HUD, khay chuẩn bị, cửa hàng, ca câu, sổ tay, tài khoản |
 | `src/alerts/` | báo động khi tab ẩn (timer trong worker) |
 | `src/spike/` | spike M0: worker + đo độ trễ báo động |
 | `supabase/migrations/` | schema Postgres + RLS + RPC |

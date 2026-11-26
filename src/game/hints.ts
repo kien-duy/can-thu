@@ -1,6 +1,11 @@
 import { speciesOf } from '../content'
 import { type GameState, waitStatus } from '../sim/game'
 
+export interface HintContext {
+  hasBait: boolean
+  sounded: boolean
+}
+
 /** Nút hành động chính và dòng gợi ý theo tình huống (giọng văn: thong thả, rành nghề, gần gũi). */
 export interface ActionHint {
   label: string
@@ -10,9 +15,11 @@ export interface ActionHint {
   urgent?: boolean
 }
 
-export function actionFor(s: GameState, t: number): ActionHint {
+export function actionFor(s: GameState, t: number, ctx: HintContext = { hasBait: true, sounded: true }): ActionHint {
   switch (s.phase) {
     case 'ready':
+      if (!ctx.hasBait) return { label: 'Giữ để quăng', hint: 'Hết mồi rồi. Mở Chuẩn bị → Mồi để trộn chậu mới, không thì cá rất ít ăn.', mode: 'hold' }
+      if (!ctx.sounded) return { label: 'Giữ để quăng', hint: 'Mồi trên lưỡi rồi. Chưa dò đáy: mở Chuẩn bị → Cân phao để mồi nằm đúng chỗ.', mode: 'hold' }
       return { label: 'Giữ để quăng', hint: 'Mồi trên lưỡi rồi. Giữ để lấy đà, thả ra để quăng.', mode: 'hold' }
     case 'charging':
       return { label: 'Thả để quăng', hint: 'Giữ càng lâu quăng càng xa.', mode: 'hold' }
@@ -33,7 +40,7 @@ export function actionFor(s: GameState, t: number): ActionHint {
         urgent: (s.fight?.tension ?? 0) > 0.8,
       }
     case 'landable':
-      return { label: 'Vớt', hint: 'Cá đuối rồi, đã vào gần bờ. Vớt đi!', mode: 'tap', urgent: true }
+      return { label: 'Vớt', hint: 'Cá đuối rồi, nổi đầu cạnh bờ. Vớt đi, chần chừ là cá lặn mất!', mode: 'tap', urgent: true }
     case 'result':
       return { label: 'Câu tiếp', hint: resultText(s), mode: 'tap' }
   }

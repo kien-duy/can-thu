@@ -343,3 +343,242 @@ button:focus-visible {
     height: 240px;
   }
 }
+
+/* ---------------------------------------------------------------- M2: bảng, khay, cửa hàng, ca câu */
+.primary,
+.danger {
+  border: 0;
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-weight: 700;
+}
+.primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.danger {
+  background: var(--alert);
+  color: #fff;
+}
+.primary:disabled,
+.ghost:disabled,
+.ticket:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.warn {
+  color: var(--alert);
+}
+.good {
+  color: var(--leaf);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.stack {
+  display: grid;
+  gap: 12px;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.row input {
+  flex: 1 1 200px;
+  min-height: 40px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--text-muted) 40%, transparent);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 12px;
+  font: inherit;
+}
+.sheet h3 {
+  margin: 16px 0 8px;
+  font-size: 15px;
+}
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 4px 0 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-muted) 25%, transparent);
+}
+.tabs button {
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  padding: 8px 12px;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+}
+.tabs button.is-active {
+  color: var(--text);
+  font-weight: 700;
+  border-bottom-color: var(--primary);
+}
+.card-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+.card-row > div {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.choice-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.choice {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.choice.is-active {
+  border-color: var(--primary);
+}
+.tag {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--water);
+  font-weight: 400;
+}
+@media (prefers-color-scheme: dark) {
+  .tag {
+    color: #8cc8dc;
+  }
+}
+.shop-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.shop-item .primary {
+  white-space: nowrap;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-muted) 20%, transparent);
+  vertical-align: top;
+}
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.stepper button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--text-muted) 40%, transparent);
+  background: var(--surface);
+  color: var(--text);
+}
+.stepper span {
+  min-width: 18px;
+  text-align: center;
+}
+.axes {
+  display: grid;
+  gap: 4px;
+}
+.overlay {
+  position: fixed;
+  z-index: 8;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(15 26 31 / 0.4);
+}
+.dialog {
+  width: min(520px, 100%);
+  max-height: calc(100% - 32px);
+  overflow-y: auto;
+  background: var(--bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.dialog h2 {
+  margin: 0 0 8px;
+}
+.ticket-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px 0;
+}
+.ticket {
+  display: grid;
+  gap: 4px;
+  padding: 14px 8px;
+  border-radius: 12px;
+  border: 2px solid var(--primary);
+  background: var(--surface);
+  color: var(--text);
+}
+.ticket strong {
+  font-size: 18px;
+}
+.more {
+  position: relative;
+}
+.more summary {
+  list-style: none;
+  cursor: pointer;
+}
+.more summary::-webkit-details-marker {
+  display: none;
+}
+.more__menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  display: grid;
+  gap: 6px;
+  min-width: 200px;
+  z-index: 3;
+}
+.more__menu .ghost {
+  text-align: left;
+}
+.notify-prompt {
+  position: fixed;
+  z-index: 6;
+  left: 16px;
+  bottom: 16px;
+  width: min(360px, calc(100% - 32px));
+}
+.notify-prompt p {
+  margin: 0 0 8px;
+}

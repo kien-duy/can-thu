@@ -134,7 +134,7 @@ Mỗi milestone đều chạy được và có test headless.
 - Báo động: tiêu đề tab + âm thanh khi tab ẩn.
 - Done: Playwright chơi từ lúc mở game tới lúc có 1 dòng trong sổ tay; dòng đó nằm trong DB.
 
-**M2. Must-haves** (tất cả dòng `must` trong `features.csv`):
+**M2. Must-haves** (xong 2026-11-26; khác kế hoạch: 8 loài hồ dịch vụ thay vì 15, 7 loài còn lại đi theo sông quê và hồ núi ở M3; hàng đợi offline dùng localStorage thay cho IndexedDB vì dữ liệu nhỏ; thông báo gửi từ trang khi worker báo, không gửi từ worker) (tất cả dòng `must` trong `features.csv`):
 - Khay chuẩn bị: cân phao (S09, theo nấc, 4 kiểu cân làm sẵn, dò đáy), trộn mồi (S10, 8 nguyên liệu, 4 trục, bài gợi ý).
 - Đủ khoảng 15 loài với nhịp riêng; thời tiết và nhiệt độ nước ảnh hưởng tới việc cá cắn.
 - Ca câu theo giờ thật (S03 rút gọn), rọng (S13), kết thúc ca bán hoặc thả (S24).

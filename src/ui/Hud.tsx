@@ -1,16 +1,21 @@
 import { actionFor } from '../game/hints'
+import { levelOf } from '../game/player'
 import { kg, useGame } from '../game/store'
 import { chargePower } from '../sim/game'
 import { clockLabel, dayPart, localHour, WEATHER_LABEL } from '../sim/world'
 import { primaryDown, primaryUp } from './controls'
+import { xu } from './Sheet'
+import { shiftRemaining } from './Shift'
 
 export function StatusCard() {
-  const now = useGame((s) => Math.floor(s.now / 30_000)) // vẽ lại mỗi 30 s là đủ
+  const minute = useGame((s) => Math.floor(s.now / 1000)) // vẽ lại mỗi giây là đủ
   const session = useGame((s) => s.session)
   const loc = useGame((s) => s.cfg.location)
   const keepnet = useGame((s) => s.keepnet)
+  const coins = useGame((s) => s.player.coins)
+  const xp = useGame((s) => s.player.xp)
   const repoKind = useGame((s) => s.repo.kind)
-  const t = now * 30_000
+  const t = minute * 1000
   const w = session?.weather
   const totalG = keepnet.reduce((a, c) => a + c.weightG, 0)
   return (
@@ -18,7 +23,10 @@ export function StatusCard() {
       <div className="status__time">
         <strong>{clockLabel(t)}</strong> <span>{dayPart(localHour(t))}</span>
       </div>
-      <div>{loc.nameVi}</div>
+      <div>
+        {loc.nameVi}
+        {session?.plannedEndAt && <span className="muted"> · ca còn <span data-testid="shift-left">{shiftRemaining(session.plannedEndAt, t)}</span></span>}
+      </div>
       {w && (
         <div className="muted">
           {WEATHER_LABEL[w.kind]} · {w.tempC}°C · nước {w.waterTempC}°C
@@ -26,6 +34,9 @@ export function StatusCard() {
       )}
       <div className="muted">
         Rọng: {keepnet.length} con · {kg(totalG)} kg
+      </div>
+      <div className="muted">
+        <span data-testid="hud-coins">{xu(coins)}</span> · Cấp {levelOf(xp)}
       </div>
       <div className="muted small">{repoKind === 'supabase' ? 'Đang lưu lên server' : 'Đang lưu trên máy này'}</div>
     </section>
@@ -35,7 +46,10 @@ export function StatusCard() {
 export function ActionBar() {
   const game = useGame((s) => s.game)
   const now = useGame((s) => s.now)
-  const a = actionFor(game, now)
+  const hasBait = useGame((s) => !!s.player.bowl && s.player.bowl.uses > 0)
+  const sounded = useGame((s) => s.player.depthCm[s.cfg.location.id] !== undefined)
+  const bowl = useGame((s) => s.player.bowl)
+  const a = actionFor(game, now, { hasBait, sounded })
   const power = game.phase === 'charging' && game.chargeStartedAt ? chargePower(game.chargeStartedAt, now) : 0
   return (
     <section className="action" aria-live="polite">
@@ -48,7 +62,11 @@ export function ActionBar() {
         className={`action__button${a.urgent ? ' is-urgent' : ''}`}
         data-testid="primary"
         onPointerDown={(e) => {
-          e.currentTarget.setPointerCapture(e.pointerId)
+          try {
+            e.currentTarget.setPointerCapture(e.pointerId) // giữ nút dù ngón tay trượt ra ngoài
+          } catch {
+            /* thiết bị không hỗ trợ */
+          }
           primaryDown()
         }}
         onPointerUp={primaryUp}
@@ -58,7 +76,9 @@ export function ActionBar() {
         {a.label}
         {game.phase === 'charging' && <span className="action__power" style={{ width: `${power * 100}%` }} />}
       </button>
-      <p className="muted small">Phím tắt: Space · Vớt: E</p>
+      <p className="muted small">
+        {bowl ? `Mồi: ${bowl.label}, còn ${bowl.uses} lần móc` : 'Hết mồi'} · Space · Vớt: E
+      </p>
     </section>
   )
 }
@@ -91,11 +111,32 @@ export function Toasts() {
   return (
     <div className="toasts" aria-live="polite">
       {toasts.map((t) => (
-        <div key={t.id} className="toast">
+        <div key={t.id} className={`toast${t.tone === 'error' ? ' toast--error' : ''}`}>
           {t.text}
         </div>
       ))}
       {err && <div className="toast toast--error">{err}</div>}
+    </div>
+  )
+}
+
+export function NotifyPrompt() {
+  const show = useGame((s) => s.notifyPrompt)
+  if (!show) return null
+  const { enableNotifications, dismissNotifyPrompt } = useGame.getState()
+  return (
+    <div className="card notify-prompt" role="dialog" aria-label="Bật thông báo">
+      <p>
+        <strong>Con cá đầu tiên rồi!</strong> Muốn máy báo khi cá rỉa mồi lúc bạn đang ở cửa sổ khác không?
+      </p>
+      <div className="row">
+        <button type="button" className="primary" onClick={() => void enableNotifications()}>
+          Bật thông báo
+        </button>
+        <button type="button" className="ghost" onClick={dismissNotifyPrompt}>
+          Để sau
+        </button>
+      </div>
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import type { Location, Species } from '../content'
 import { between, type Rng, weighted } from './rng'
+import { type Setup, signalScale, speciesWeight, waitFactor } from './setup'
 
 /**
  * Kế hoạch một lượt cá cắn câu, tính ngay lúc quăng.
@@ -68,6 +69,8 @@ export interface PlanOptions {
   hour: number
   /** Thu nhỏ thời gian chờ và rỉa (chế độ test). 1 = bình thường. */
   timeScale?: number
+  /** Đồ nghề, mồi, cân phao, nhiệt độ nước. Không có thì coi như mọi thứ trung tính. */
+  setup?: Setup
 }
 
 export function planSpeciesBite(
@@ -78,27 +81,31 @@ export function planSpeciesBite(
 ): SpeciesBitePlan {
   const scale = o.timeScale ?? 1
   const byId = new Map(speciesList.map((s) => [s.id, s]))
-  const species = weighted(
-    rng,
-    loc.species.map((ls) => {
-      const s = byId.get(ls.id)!
-      return { item: s, weight: ls.weight * hourFactor(s, o.hour) }
-    }),
-  )
-  const nibbleStart = o.settledAt + between(rng, loc.waitSec[0], loc.waitSec[1]) * 1000 * scale
+  const weights = loc.species.map((ls) => {
+    const s = byId.get(ls.id)!
+    const base = ls.weight * hourFactor(s, o.hour)
+    return { item: s, base, weight: o.setup ? speciesWeight(s, ls.weight, hourFactor(s, o.hour), loc, o.setup) : base }
+  })
+  const species = weighted(rng, weights)
+  const attract = weights.reduce((a, w) => a + w.weight, 0) / weights.reduce((a, w) => a + w.base, 0)
+  const waitMul = o.setup ? waitFactor(attract, o.setup.bait !== null) : 1
+  const amp = o.setup ? signalScale(loc, o.setup) : 1
+  const falseBites = o.setup?.rig.falseBites ?? 1
+  const nibbleStart = o.settledAt + between(rng, loc.waitSec[0], loc.waitSec[1]) * 1000 * scale * waitMul
   const strikeOpen = nibbleStart + between(rng, species.bite.nibbleSec[0], species.bite.nibbleSec[1]) * 1000 * scale
   const windowMs = species.bite.windowSec * 1000 * Math.max(scale, 1)
   const twitches: Twitch[] = []
   let t = nibbleStart
   const [eMin, eMax] = species.bite.decoy.everySec
+  const every = (x: number) => (x * 1000 * Math.max(scale, 0.25)) / Math.max(0.3, falseBites)
   while (true) {
-    t += between(rng, eMin, eMax) * 1000 * Math.max(scale, 0.25)
+    t += between(rng, every(eMin), every(eMax))
     if (t > strikeOpen - 700) break
-    twitches.push({ at: t, durMs: between(rng, 250, 500), amp: species.bite.decoy.amp * between(rng, 0.6, 1.2) })
+    twitches.push({ at: t, durMs: between(rng, 250, 500), amp: species.bite.decoy.amp * amp * between(rng, 0.6, 1.2) })
   }
   if (species.bite.signal.kind === 'slow_sink') {
-    // chép: "chớp đầu" ngay trước khi ăn thật. Phao tụt rồi bật về, cá mới ngậm hờ.
-    twitches.push({ at: strikeOpen - 650, durMs: 380, amp: 0.55 })
+    // chép, trắm: "chớp đầu" ngay trước khi ăn thật. Phao tụt rồi bật về, cá mới ngậm hờ.
+    twitches.push({ at: strikeOpen - 650, durMs: 380, amp: 0.55 * amp })
   }
   return {
     castAt: o.castAt,
@@ -107,7 +114,7 @@ export function planSpeciesBite(
     strikeClose: strikeOpen + windowMs,
     speciesId: species.id,
     weightG: sampleWeight(rng, species),
-    signal: species.bite.signal,
+    signal: { kind: species.bite.signal.kind, amp: species.bite.signal.amp * amp },
     twitches,
   }
 }

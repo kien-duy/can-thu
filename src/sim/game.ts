@@ -9,6 +9,7 @@ import { type Location, type Species, speciesOf } from '../content'
 import { judgeStrike, planSpeciesBite, type SpeciesBitePlan } from './bite'
 import { advanceFight, type FightState, initFight, outcomeOf, STEP_MS } from './fight'
 import { createRng } from './rng'
+import type { Setup } from './setup'
 
 export const CHARGE_FULL_MS = 1200
 export const MIN_POWER = 0.15
@@ -17,6 +18,8 @@ export const SINK_MS = 3000
 export const LEAVE_AFTER_MS = 3500
 /** Máy lag (khung hình thưa) thì trận kéo vẫn tiến, nhưng không quá ngần này mỗi nhịp. */
 export const MAX_FIGHT_TICK_MS = 1000
+/** Cá đuối nổi đầu cạnh bờ chờ vớt ngần này; quá thì cá hồi sức, lặn xuống kéo tiếp. */
+export const LANDABLE_GRACE_MS = 5000
 
 export interface GameConfig {
   location: Location
@@ -48,17 +51,18 @@ export interface GameState {
   phase: Phase
   casts: number
   chargeStartedAt?: number
-  cast?: { at: number; settledAt: number; distanceM: number; power: number }
+  cast?: { at: number; settledAt: number; distanceM: number; power: number; strength: number }
   bite?: SpeciesBitePlan
   fight?: FightState
   reeling: boolean
   result?: Result
   lastTick: number
+  landableSince?: number
 }
 
 export type GameEvent =
   | { type: 'charge'; t: number }
-  | { type: 'release'; t: number; hour: number }
+  | { type: 'release'; t: number; hour: number; setup?: Setup }
   /** paused: tab đang ẩn. Trận kéo đứng yên (không ai cầm cần), các mốc theo giờ vẫn chạy. */
   | { type: 'tick'; t: number; paused?: boolean }
   | { type: 'strike'; t: number }
@@ -92,13 +96,14 @@ export function reduce(cfg: GameConfig, s: GameState, e: GameEvent): GameState {
         settledAt,
         hour: e.hour,
         timeScale: cfg.timeScale,
+        setup: e.setup,
       })
       return {
         ...s,
         phase: 'sinking',
         casts: s.casts + 1,
         chargeStartedAt: undefined,
-        cast: { at: e.t, settledAt, distanceM: dMin + (dMax - dMin) * power, power },
+        cast: { at: e.t, settledAt, distanceM: dMin + (dMax - dMin) * power + (e.setup?.castBonusM ?? 0) * power, power, strength: e.setup?.strength ?? 1 },
         bite,
         lastTick: e.t,
       }
@@ -116,7 +121,7 @@ export function reduce(cfg: GameConfig, s: GameState, e: GameEvent): GameState {
         return {
           ...s,
           phase: 'fighting',
-          fight: initFight(sp, bite.weightG, s.cast!.distanceM, cfg.seed ^ (s.casts * 104729)),
+          fight: initFight(sp, bite.weightG, s.cast!.distanceM, cfg.seed ^ (s.casts * 104729), s.cast!.strength),
           reeling: false,
           lastTick: e.t,
         }
@@ -155,7 +160,12 @@ function tick(_cfg: GameConfig, s: GameState, t: number, paused: boolean): GameS
     return { ...s, phase: 'result', result: { kind: 'gone', speciesId: s.bite!.speciesId }, lastTick: t }
   }
   if ((s.phase === 'fighting' || s.phase === 'landable') && s.fight) {
-    if (paused) return { ...s, reeling: false, lastTick: t }
+    if (paused) return { ...s, reeling: false, lastTick: t, landableSince: s.landableSince === undefined ? undefined : t }
+    if (s.phase === 'landable') {
+      if (t - (s.landableSince ?? t) <= LANDABLE_GRACE_MS) return { ...s, lastTick: t }
+      // cá hồi sức, lặn xuống: kéo tiếp
+      return { ...s, phase: 'fighting', landableSince: undefined, fight: { ...s.fight, stamina: 0.45, distanceM: 4 }, lastTick: t }
+    }
     const raw = Math.max(0, t - s.lastTick)
     const dt = Math.min(MAX_FIGHT_TICK_MS, raw)
     const consumed = Math.floor(dt / STEP_MS) * STEP_MS
@@ -166,7 +176,8 @@ function tick(_cfg: GameConfig, s: GameState, t: number, paused: boolean): GameS
     const o = outcomeOf(fight)
     if (o === 'broke') return { ...s, fight, phase: 'result', result: { kind: 'broke', speciesId: fight.speciesId, weightG: fight.weightG }, lastTick: nextTick }
     if (o === 'escaped') return { ...s, fight, phase: 'result', result: { kind: 'escaped', speciesId: fight.speciesId }, lastTick: nextTick }
-    return { ...s, fight, phase: o === 'landable' ? 'landable' : 'fighting', lastTick: nextTick }
+    if (o === 'landable') return { ...s, fight, phase: 'landable', landableSince: t, reeling: false, lastTick: nextTick }
+    return { ...s, fight, phase: 'fighting', lastTick: nextTick }
   }
   return { ...s, lastTick: t }
 }

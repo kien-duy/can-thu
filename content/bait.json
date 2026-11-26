@@ -1,0 +1,21 @@
+{
+  "usesPerBowl": 40,
+  "ingredients": [
+    { "id": "bot_nen", "nameVi": "Bột nền", "note": "Giữ form viên mồi, không mùi. Nên chiếm chừng một nửa chậu.", "axes": { "fishy": 0, "sweet": 0, "sour": 0, "loose": 0.2 }, "packScoops": 10, "packXu": 20 },
+  { "id": "bot_tom", "nameVi": "Bột tôm", "note": "Mùi tanh. Rô phi, điêu hồng, chim trắng mê; trời nóng càng hợp.", "axes": { "fishy": 1, "sweet": 0, "sour": 0, "loose": 0.3 }, "packScoops": 6, "packXu": 40 },
+  { "id": "bot_sua_ngo", "nameVi": "Bột sữa ngô", "note": "Thơm ngọt mùi sữa, ngô. Chép, diếc thích, nhất là lúc nước mát.", "axes": { "fishy": 0, "sweet": 1, "sour": 0, "loose": 0.3 }, "packScoops": 6, "packXu": 35 },
+  { "id": "cam_rang", "nameVi": "Cám gạo rang", "note": "Rẻ, bông, thơm cám. Tạo ổ tốt nhưng cũng hút cá tạp.", "axes": { "fishy": 0, "sweet": 0.6, "sour": 0, "loose": 0.8 }, "packScoops": 10, "packXu": 15 },
+  { "id": "ngo_u_chua", "nameVi": "Ngô ủ chua", "note": "Vừa chua vừa ngọt. Trắm cỏ, trôi rất thích.", "axes": { "fishy": 0, "sweet": 0.5, "sour": 0.9, "loose": 0.2 }, "packScoops": 6, "packXu": 30 },
+  { "id": "tinh_chua", "nameVi": "Tinh chua", "note": "Phụ gia chua, mạnh: chỉ cần một ít. Kích rô phi ăn khi trời nóng; mè, trôi mê chua.", "axes": { "fishy": 0, "sweet": 0, "sour": 1, "loose": 0 }, "packScoops": 4, "packXu": 30 },
+  { "id": "bot_ra", "nameVi": "Bột rã", "note": "Làm viên mồi rã nhanh thành đám mây. Dùng cho mè, hoặc chút ít cho mồi bông.", "axes": { "fishy": 0, "sweet": 0, "sour": 0, "loose": 1 }, "packScoops": 6, "packXu": 25 },
+  { "id": "bot_keo", "nameVi": "Bột kéo sợi", "note": "Giữ mồi trên lưỡi, rã chậm. Chỉ cần ít; nhiều quá viên mồi chết, ít mùi.", "axes": { "fishy": 0, "sweet": 0, "sour": 0, "loose": -1 }, "packScoops": 4, "packXu": 25 }
+  ],
+  "recipes": [
+    { "id": "ro_phi", "nameVi": "Rô phi (tanh, hơi chua)", "for": ["ro_phi_den", "dieu_hong"], "scoops": { "bot_nen": 4, "bot_tom": 3, "tinh_chua": 1, "cam_rang": 1 } },
+    { "id": "chep_thom", "nameVi": "Chép, diếc (thơm ngọt)", "for": ["chep", "diec"], "scoops": { "bot_nen": 3, "bot_sua_ngo": 3, "cam_rang": 2, "bot_keo": 1 } },
+    { "id": "tram_chua", "nameVi": "Trắm cỏ, trôi (ngô chua)", "for": ["tram_co", "troi"], "scoops": { "bot_nen": 3, "ngo_u_chua": 4, "tinh_chua": 1 } },
+    { "id": "me_toi", "nameVi": "Mè hoa (chua, rã mạnh)", "for": ["me_hoa"], "scoops": { "bot_nen": 2, "tinh_chua": 2, "bot_ra": 4, "bot_tom": 1 } },
+    { "id": "tap", "nameVi": "Mồi tạp (cám, tôm)", "for": ["chim_trang"], "scoops": { "bot_nen": 3, "bot_tom": 2, "cam_rang": 3 } }
+  ],
+  "starterStock": { "bot_nen": 12, "bot_tom": 6, "bot_sua_ngo": 4, "cam_rang": 8, "ngo_u_chua": 2, "tinh_chua": 2, "bot_ra": 2, "bot_keo": 2 }
+}

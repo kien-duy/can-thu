@@ -108,6 +108,38 @@ describe('vòng câu', () => {
 })
 
 describe('kéo cá', () => {
+  it('cá đuối nổi đầu chờ vớt 5 s dù người chơi buông tay; quá thì cá lặn xuống kéo tiếp', async () => {
+    const { LANDABLE_GRACE_MS } = await import('./game')
+    const c = cfg(11)
+    let s = castAt(c)
+    const t0 = s.bite!.strikeOpen + 200
+    s = reduce(c, { ...s, phase: 'waiting' }, { type: 'strike', t: t0 })
+    let t = t0
+    for (let i = 0; i < 2400 && s.phase === 'fighting'; i++) {
+      const want = (s.fight?.tension ?? 0) < 0.72
+      if (want !== s.reeling) s = reduce(c, s, { type: 'reel', t, on: want })
+      t += 50
+      s = reduce(c, s, { type: 'tick', t })
+    }
+    expect(s.phase).toBe('landable')
+    const since = t
+    for (; t < since + LANDABLE_GRACE_MS - 100; t += 100) s = reduce(c, s, { type: 'tick', t })
+    expect(s.phase).toBe('landable')
+    s = reduce(c, s, { type: 'tick', t: since + LANDABLE_GRACE_MS + 100 })
+    expect(s.phase).toBe('fighting')
+  })
+  it('cần đỡ sốc: quá tải một nhịp ngắn (dưới 400 ms) rồi thả tay thì chưa đứt', async () => {
+    const { OVERLOAD_MS, STEP_MS } = await import('./fight')
+    const chep = speciesOf('chep')
+    let f = initFight(chep, 5000, 7, 3)
+    // ghì tới khi bắt đầu quá tải
+    while (f.overloadMs === 0 && outcomeOf(f) === 'fighting') f = advanceFight(f, STEP_MS, true)
+    f = advanceFight(f, OVERLOAD_MS - 2 * STEP_MS, true)
+    expect(outcomeOf(f)).not.toBe('broke')
+    f = advanceFight(f, 2000, false) // thả tay
+    expect(outcomeOf(f)).not.toBe('broke')
+    expect(f.overloadMs).toBe(0)
+  })
   it('khung hình ngắn hơn một bước (60 fps) vẫn làm trận kéo tiến đúng theo thời gian thật', () => {
     const c = cfg(11)
     let s = castAt(c)

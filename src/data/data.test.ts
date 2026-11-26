@@ -7,7 +7,7 @@ import { aggregateHandbook, type CatchRecord } from './types'
 
 function memStorage() {
   const m = new Map<string, string>()
-  return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) }
+  return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k) }
 }
 
 const base: Omit<CatchRecord, 'id' | 'weightG' | 'caughtAt' | 'localHour' | 'speciesId'> = {
@@ -47,5 +47,62 @@ describe('sổ tay', () => {
 describe('seed', () => {
   it('supabase/seed.sql khớp với content (chạy `npm run seed:gen` nếu hỏng)', () => {
     expect(readFileSync('supabase/seed.sql', 'utf8')).toBe(seedSql(SPECIES, LOCATIONS))
+  })
+})
+
+describe('lưu tiến độ', () => {
+  it('ghi theo version: máy khác đã lưu bản mới hơn thì trả -1', async () => {
+    const repo = new LocalRepository(memStorage())
+    expect(await repo.loadPlayer()).toBeNull()
+    expect(await repo.savePlayer(0, { coins: 1, xp: 0, state: {} })).toBe(1)
+    expect(await repo.savePlayer(1, { coins: 2, xp: 0, state: {} })).toBe(2)
+    expect(await repo.savePlayer(1, { coins: 9, xp: 0, state: {} })).toBe(-1)
+    expect((await repo.loadPlayer())?.coins).toBe(2)
+  })
+  it('ca câu: mở ca mới tự đóng ca cũ; đóng ca rồi thì không còn ca mở', async () => {
+    const repo = new LocalRepository(memStorage())
+    const s = (id: string) => ({ id, locationId: 'ho_dong_xanh', kind: 'paid_shift' as const, ticketCoins: 60, startedAt: 1, plannedEndAt: 2, weather: { kind: 'sunny' as const, tempC: 27, windMs: 1, waterTempC: 26 } })
+    await repo.startSession(s('a'))
+    await repo.startSession(s('b'))
+    expect((await repo.openSession())?.id).toBe('b')
+    await repo.endSession('b', 3, 'sold', 50)
+    expect(await repo.openSession()).toBeNull()
+  })
+})
+
+describe('hàng đợi offline', () => {
+  function flaky() {
+    const inner = new LocalRepository(memStorage())
+    let down = true
+    const calls: string[] = []
+    const wrapped = Object.assign(Object.create(inner), {
+      recordCatch: async (c: CatchRecord) => {
+        calls.push(c.id)
+        if (down) throw new Error('mất mạng')
+        return inner.recordCatch(c)
+      },
+      handbook: async () => {
+        if (down) throw new Error('mất mạng')
+        return inner.handbook()
+      },
+    })
+    return { inner, wrapped, calls, up: () => (down = false) }
+  }
+
+  it('mất mạng: giữ cá trong hàng đợi, sổ tay vẫn thấy; có mạng lại thì gửi đúng thứ tự, không trùng', async () => {
+    const { OutboxRepository } = await import('./outbox')
+    const f = flaky()
+    const box = new OutboxRepository(f.wrapped, memStorage())
+    await box.recordCatch({ ...base, id: 'c1', speciesId: 'ro_phi_den', weightG: 500, caughtAt: 1, localHour: 7 })
+    await box.recordCatch({ ...base, id: 'c2', speciesId: 'ro_phi_den', weightG: 700, caughtAt: 2, localHour: 7 })
+    expect(box.pending()).toHaveLength(2)
+    expect(box.failures).toBeGreaterThan(0)
+    expect((await box.handbook())[0]).toMatchObject({ totalCaught: 2, recordWeightG: 700 })
+    f.up()
+    await box.flush()
+    expect(box.pending()).toHaveLength(0)
+    expect(f.calls.filter((x) => x === 'c1').length).toBeGreaterThanOrEqual(1)
+    expect((await box.handbook())[0]).toMatchObject({ totalCaught: 2 }) // không đếm hai lần
+    expect((await f.inner.recentCatches(10)).map((c) => c.id)).toEqual(['c2', 'c1'])
   })
 })

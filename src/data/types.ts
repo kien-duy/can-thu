@@ -21,6 +21,8 @@ export interface SessionRecord {
   weather: Weather
 }
 
+export type SessionOutcome = 'sold' | 'released' | 'mixed' | 'abandoned'
+
 export interface CatchRecord {
   id: string
   sessionId: string
@@ -47,14 +49,39 @@ export interface HandbookEntry {
   favouriteHour: number
 }
 
+export interface StoredPlayer {
+  version: number
+  coins: number
+  xp: number
+  state: unknown
+}
+
+export interface Account {
+  /** 'local' = chưa nối server, dữ liệu chỉ ở máy này */
+  mode: 'local' | 'guest' | 'linked'
+  email?: string
+  providers: string[]
+}
+
 export interface GameRepository {
   readonly kind: 'local' | 'supabase'
   /** Đăng nhập khách nếu chưa có phiên. */
   init(): Promise<void>
+  loadPlayer(): Promise<StoredPlayer | null>
+  /** Trả về version mới, hoặc -1 nếu trên server đã có bản mới hơn (máy khác vừa lưu). */
+  savePlayer(expectedVersion: number, p: Omit<StoredPlayer, 'version'>): Promise<number>
+  openSession(): Promise<SessionRecord | null>
   startSession(s: SessionRecord): Promise<void>
+  endSession(id: string, endedAt: number, outcome: SessionOutcome, earnedCoins: number): Promise<void>
   recordCatch(c: CatchRecord): Promise<void>
+  setCatchFate(id: string, fate: CatchRecord['fate']): Promise<void>
   handbook(): Promise<HandbookEntry[]>
   recentCatches(limit: number): Promise<CatchRecord[]>
+  account(): Promise<Account>
+  linkGoogle(): Promise<void>
+  /** Gửi thư xác nhận; tài khoản thành chính thức khi bấm link trong thư. */
+  linkEmail(email: string): Promise<void>
+  deleteAccount(): Promise<void>
 }
 
 /** Tổng hợp sổ tay theo loài. Cùng nghĩa với view handbook_entries trong Postgres. */
@@ -76,4 +103,26 @@ export function aggregateHandbook(catches: readonly CatchRecord[]): HandbookEntr
       favouriteHour,
     }
   })
+}
+
+/** Gộp sổ tay từ server với những con cá còn nằm trong hàng đợi offline. */
+export function mergeHandbook(a: readonly HandbookEntry[], b: readonly HandbookEntry[]): HandbookEntry[] {
+  const out = new Map(a.map((e) => [e.speciesId, { ...e }]))
+  for (const e of b) {
+    const x = out.get(e.speciesId)
+    if (!x) {
+      out.set(e.speciesId, { ...e })
+      continue
+    }
+    out.set(e.speciesId, {
+      speciesId: e.speciesId,
+      totalCaught: x.totalCaught + e.totalCaught,
+      recordWeightG: Math.max(x.recordWeightG, e.recordWeightG),
+      firstCaughtAt: Math.min(x.firstCaughtAt, e.firstCaughtAt),
+      lastCaughtAt: Math.max(x.lastCaughtAt, e.lastCaughtAt),
+      locations: [...new Set([...x.locations, ...e.locations])].sort(),
+      favouriteHour: x.totalCaught >= e.totalCaught ? x.favouriteHour : e.favouriteHour,
+    })
+  }
+  return [...out.values()]
 }

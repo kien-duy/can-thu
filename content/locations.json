@@ -3,14 +3,24 @@
     "id": "ho_dong_xanh",
     "nameVi": "Hồ Đồng Xanh",
     "kind": "fee_pond",
-    "summary": "Hồ dịch vụ nhỏ ven làng, nước sâu chừng 1,8 m, thả chủ yếu rô phi và điêu hồng, có ít chép.",
+    "summary": "Hồ dịch vụ nhỏ ven làng, nước sâu chừng 1,8 m. Thả chủ yếu rô phi và điêu hồng, có thêm chép, diếc, trôi, chim trắng; thỉnh thoảng có trắm cỏ và mè hoa lớn.",
     "bottomDepthCm": 180,
     "castDistanceM": [5, 9],
     "waitSec": [20, 90],
+    "tickets": [
+      { "hours": 1, "priceXu": 60 },
+      { "hours": 2, "priceXu": 100 },
+      { "hours": 4, "priceXu": 180 }
+    ],
     "species": [
       { "id": "ro_phi_den", "weight": 6 },
       { "id": "dieu_hong", "weight": 3 },
-      { "id": "chep", "weight": 1 }
+      { "id": "chep", "weight": 1.2 },
+      { "id": "diec", "weight": 1.5 },
+      { "id": "troi", "weight": 1.5 },
+      { "id": "chim_trang", "weight": 1 },
+      { "id": "tram_co", "weight": 0.5 },
+      { "id": "me_hoa", "weight": 0.5 }
     ]
   }
 ]
