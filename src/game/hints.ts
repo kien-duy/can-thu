@@ -75,6 +75,8 @@ function resultText(s: GameState): string {
       return `${capital(name)} ăn xong mồi rồi bỏ đi. Lần sau thấy phao đứng hẳn là giật.`
     case 'broke':
       return 'Phựt. Thẻo đứt, cá đi rồi. Lần sau thả tay khi dây căng đỏ.'
+    case 'rod_broke':
+      return 'Rắc, gãy cần, cá đi rồi. Dây căng đỏ là thả tay ngay. Dây khoẻ hơn cần nhiều thì lúc quá tải cần gánh hết lực: chọn dây vừa sức cần.'
     case 'escaped':
       return 'Cá chạy xa quá, tuột lưỡi rồi.'
   }

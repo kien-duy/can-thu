@@ -280,6 +280,7 @@ function RodAndLine() {
   // vị trí ngang của đầu dây và độ nghiêng cần, trượt dần về đích cho mượt
   const lineX = useRef(0)
   const rodTilt = useRef(0)
+  const tip = useRef<THREE.Mesh>(null)
   useFrame(({ clock }, delta) => {
     const { game, now } = useGame.getState()
     const pos = line.geometry.attributes.position as THREE.BufferAttribute
@@ -306,6 +307,12 @@ function RodAndLine() {
       const side = (game.phase === 'fighting' || game.phase === 'landable') && game.fight ? game.fight.rodSide : 0
       rodTilt.current += (-side * 0.25 - rodTilt.current) * Math.min(1, delta * 6)
       rod.current.rotation.z = rodTilt.current
+      // gãy cần: chỉ còn nửa dưới, nửa ngọn rũ xuống tới khi câu tiếp
+      const broken = game.phase === 'result' && game.result?.kind === 'rod_broke'
+      rod.current.position.set(0.35, 0.9, 0.4)
+      rod.current.scale.y = broken ? 0.5 : 1
+      if (broken) rod.current.translateY(-0.9)
+      if (tip.current) tip.current.visible = broken
     }
   })
   return (
@@ -313,6 +320,10 @@ function RodAndLine() {
       <primitive object={line} />
       <mesh ref={rod} position={[0.35, 0.9, 0.4]} rotation={[-1.05, 0, 0]}>
         <cylinderGeometry args={[0.008, 0.02, 3.6, 6]} />
+        <meshStandardMaterial color="#5b4630" />
+      </mesh>
+      <mesh ref={tip} visible={false} position={[0.35, 0.12, 0.2]} rotation={[0.25, 0, 0.15]}>
+        <cylinderGeometry args={[0.008, 0.014, 1.6, 6]} />
         <meshStandardMaterial color="#5b4630" />
       </mesh>
     </>
