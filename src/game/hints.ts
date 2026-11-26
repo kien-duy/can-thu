@@ -68,6 +68,7 @@ function resultText(s: GameState): string {
     case 'broke':
       return 'Phựt. Thẻo đứt, cá đi rồi. Lần sau thả tay khi dây căng đỏ.'
     case 'escaped':
+      if (r.reason === 'unhooked') return 'Tuột lưỡi: lưỡi nhỏ so với cá. Gặp cá cỡ này thì buộc lưỡi to hơn.'
       return 'Cá chạy xa quá, tuột lưỡi rồi.'
   }
 }

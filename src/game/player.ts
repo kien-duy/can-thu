@@ -4,7 +4,7 @@
  * Lưu lên server ở cột jsonb `player_state.state` (xu và xp nằm ở cột riêng).
  */
 import { z } from 'zod'
-import { BAIT, floatOf, GEAR, ingredientOf, type Location, lineOf, rigOf, rodOf, speciesOf } from '../content'
+import { BAIT, floatOf, GEAR, hookOf, ingredientOf, type Location, lineOf, rigOf, rodOf, speciesOf } from '../content'
 import { CHUM_PER_THROW, CHUM_USES, chumNow, mixAxes, type Setup } from '../sim/setup'
 import { type Quest, type QuestState, rollover } from './quests'
 
@@ -16,8 +16,8 @@ const AxesZ = z.object({ fishy: z.number(), sweet: z.number(), sour: z.number(),
 export const PlayerStateSchema = z.object({
   coins: z.number().int().nonnegative(),
   xp: z.number().int().nonnegative(),
-  owned: z.object({ rods: z.array(z.string()), lines: z.array(z.string()), floats: z.array(z.string()) }),
-  equipped: z.object({ rod: z.string(), line: z.string(), float: z.string(), rig: z.string() }),
+  owned: z.object({ rods: z.array(z.string()), lines: z.array(z.string()), floats: z.array(z.string()), hooks: z.array(z.string()) }),
+  equipped: z.object({ rod: z.string(), line: z.string(), float: z.string(), rig: z.string(), hook: z.string() }),
   /** độ sâu phao đã đặt theo từng địa điểm (cm); chưa có = chưa dò đáy */
   depthCm: z.record(z.string(), z.number()),
   stock: z.record(z.string(), z.number().int().nonnegative()),
@@ -39,7 +39,7 @@ export function newPlayer(): PlayerState {
   return {
     coins: START_COINS,
     xp: 0,
-    owned: { rods: [s.rod], lines: [s.line], floats: [s.float] },
+    owned: { rods: [s.rod], lines: [s.line], floats: [s.float], hooks: [s.hook] },
     equipped: { ...s },
     depthCm: {},
     stock: { ...BAIT.starterStock },
@@ -54,8 +54,20 @@ export function newPlayer(): PlayerState {
 /** Đọc từ server/máy; dữ liệu hỏng hoặc thiếu trường thì lấp bằng giá trị mới. */
 export function parsePlayer(raw: unknown): PlayerState {
   const base = newPlayer()
-  const r = PlayerStateSchema.safeParse({ ...base, ...(typeof raw === 'object' && raw ? raw : {}) })
+  const r = PlayerStateSchema.safeParse(withHookDefaults({ ...base, ...(typeof raw === 'object' && raw ? raw : {}) }))
   return r.success ? r.data : base
+}
+
+/** Bản lưu cũ chưa có lưỡi câu: lấp lưỡi khởi đầu vào túi và lắp sẵn, giữ nguyên mọi thứ khác. */
+function withHookDefaults(o: Record<string, unknown>): Record<string, unknown> {
+  const starter = GEAR.starter.hook
+  const owned = o.owned
+  const equipped = o.equipped
+  return {
+    ...o,
+    owned: owned && typeof owned === 'object' && !('hooks' in owned) ? { ...owned, hooks: [starter] } : owned,
+    equipped: equipped && typeof equipped === 'object' && !('hook' in equipped) ? { ...equipped, hook: starter } : equipped,
+  }
 }
 
 // ---------------------------------------------------------------- cấp độ
@@ -78,9 +90,9 @@ export function addXp(p: PlayerState, xp: number): PlayerState {
 
 // ---------------------------------------------------------------- cửa hàng
 
-type Kind = 'rods' | 'lines' | 'floats'
-const catalog = { rods: GEAR.rods, lines: GEAR.lines, floats: GEAR.floats }
-const slot = { rods: 'rod', lines: 'line', floats: 'float' } as const
+type Kind = 'rods' | 'lines' | 'floats' | 'hooks'
+const catalog = { rods: GEAR.rods, lines: GEAR.lines, floats: GEAR.floats, hooks: GEAR.hooks }
+const slot = { rods: 'rod', lines: 'line', floats: 'float', hooks: 'hook' } as const
 
 export function buyGear(p: PlayerState, kind: Kind, id: string): Op {
   const item = catalog[kind].find((x) => x.id === id)
@@ -198,6 +210,7 @@ export function setupFor(p: PlayerState, loc: Location, waterTempC: number, t = 
     strength: rod.strength * line.strength,
     castBonusM: rod.castBonusM,
     chum: t ? chumLevel(p, loc.id, t) : 0,
+    hook: hookOf(p.equipped.hook),
   }
 }
 

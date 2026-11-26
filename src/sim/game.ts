@@ -44,7 +44,8 @@ export type Result =
   | { kind: 'gone'; speciesId: string }
   | { kind: 'bait_gone' }
   | { kind: 'broke'; speciesId: string; weightG: number }
-  | { kind: 'escaped'; speciesId: string }
+  /** reason 'unhooked' = tuột lưỡi vì lưỡi nhỏ so với cá */
+  | { kind: 'escaped'; speciesId: string; reason?: 'unhooked' }
 
 export type Phase = 'ready' | 'charging' | 'sinking' | 'waiting' | 'fighting' | 'landable' | 'result'
 
@@ -52,7 +53,7 @@ export interface GameState {
   phase: Phase
   casts: number
   chargeStartedAt?: number
-  cast?: { at: number; settledAt: number; distanceM: number; power: number; strength: number }
+  cast?: { at: number; settledAt: number; distanceM: number; power: number; strength: number; hookMaxG?: number }
   bite?: SpeciesBitePlan
   fight?: FightState
   reeling: boolean
@@ -104,7 +105,7 @@ export function reduce(cfg: GameConfig, s: GameState, e: GameEvent): GameState {
         phase: 'sinking',
         casts: s.casts + 1,
         chargeStartedAt: undefined,
-        cast: { at: e.t, settledAt, distanceM: dMin + (dMax - dMin) * power + (e.setup?.castBonusM ?? 0) * power, power, strength: e.setup?.strength ?? 1 },
+        cast: { at: e.t, settledAt, distanceM: dMin + (dMax - dMin) * power + (e.setup?.castBonusM ?? 0) * power, power, strength: e.setup?.strength ?? 1, hookMaxG: e.setup?.hook?.bestForG[1] },
         bite,
         lastTick: e.t,
       }
@@ -122,7 +123,7 @@ export function reduce(cfg: GameConfig, s: GameState, e: GameEvent): GameState {
         return {
           ...s,
           phase: 'fighting',
-          fight: initFight(sp, bite.weightG, s.cast!.distanceM, cfg.seed ^ (s.casts * 104729), s.cast!.strength),
+          fight: initFight(sp, bite.weightG, s.cast!.distanceM, cfg.seed ^ (s.casts * 104729), s.cast!.strength, s.cast!.hookMaxG),
           reeling: false,
           lastTick: e.t,
         }
@@ -179,7 +180,7 @@ function tick(_cfg: GameConfig, s: GameState, t: number, paused: boolean): GameS
     const fight = advanceFight(s.fight, consumed, s.reeling)
     const o = outcomeOf(fight)
     if (o === 'broke') return { ...s, fight, phase: 'result', result: { kind: 'broke', speciesId: fight.speciesId, weightG: fight.weightG }, lastTick: nextTick }
-    if (o === 'escaped') return { ...s, fight, phase: 'result', result: { kind: 'escaped', speciesId: fight.speciesId }, lastTick: nextTick }
+    if (o === 'escaped') return { ...s, fight, phase: 'result', result: { kind: 'escaped', speciesId: fight.speciesId, ...(fight.unhooked ? { reason: 'unhooked' as const } : {}) }, lastTick: nextTick }
     if (o === 'landable') return { ...s, fight, phase: 'landable', landableSince: t, reeling: false, lastTick: nextTick }
     return { ...s, fight, phase: 'fighting', lastTick: nextTick }
   }
