@@ -11,3 +11,4 @@ test-results
 
 # Ảnh chụp bản tham khảo: chỉ để so bố cục trên máy, không phát tán (repo public)
 replica/screens/
+.claude/worktrees/
