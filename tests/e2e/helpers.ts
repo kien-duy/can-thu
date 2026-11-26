@@ -3,7 +3,17 @@ import { expect, type Page } from '@playwright/test'
 /** Tiện ích chung cho e2e. ?fast=1 thu nhỏ thời gian; ?seed cố định loài và nhịp; ?store=local không cần Supabase. */
 export const app = (page: Page) => page.getByTestId('app')
 
-export async function enterShift(page: Page, url = '/?fast=1&seed=3&store=local') {
+/**
+ * Vào ca ở hồ dịch vụ. Mặc định chạy ở chế độ văn phòng (không WebGL): máy CI vẽ 3D bằng phần mềm,
+ * một khung hình có thể chặn trang lâu hơn cả cửa sổ giật. Cảnh 3D được kiểm riêng ở các test chụp ảnh.
+ */
+export async function enterShift(page: Page, url = '/?fast=1&seed=3&store=local', view: '3d' | 'office' = 'office') {
+  await page.addInitScript((v) => {
+    if (!sessionStorage.getItem('e2e-view-set')) {
+      localStorage.setItem('can-thu:view', v)
+      sessionStorage.setItem('e2e-view-set', '1')
+    }
+  }, view)
   await page.goto(url)
   await page.getByTestId('ticket-1').click()
   await expect(app(page)).toHaveAttribute('data-shift', 'on')

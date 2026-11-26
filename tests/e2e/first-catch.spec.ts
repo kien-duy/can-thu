@@ -49,7 +49,7 @@ test('giật lúc cá mới rỉa là sớm', async ({ page }) => {
 })
 
 test('chế độ văn phòng không vẽ 3D', async ({ page }) => {
-  await enterShift(page, '/?store=local')
+  await enterShift(page, '/?store=local', '3d')
   await page.getByText('Thêm').click()
   await page.getByRole('button', { name: 'Chế độ văn phòng' }).click()
   await expect(page.locator('canvas')).toHaveCount(0)
