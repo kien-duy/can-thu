@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test'
 
-test('trang chủ hiện tên game', async ({ page }) => {
+test('trang chủ mở vào ô câu', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'Cần Thủ' })).toBeVisible()
+  await expect(page).toHaveTitle('Cần Thủ')
+  await expect(page.getByTestId('primary')).toBeVisible()
 })
 
 test('spike: worker và timer trang đều bắn mốc 5 s, trễ dưới 1,5 s khi tab đang hiện', async ({ page }) => {

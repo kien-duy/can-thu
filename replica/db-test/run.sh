@@ -10,4 +10,10 @@ P -d can_thu_test -f $D/00-supabase-auth-stub.sql -f $D/../../supabase/migration
 P -d can_thu_test -c "grant select on all tables in schema public to anon, authenticated"
 out=$(psql -h $H -p $PORT -U postgres -d can_thu_test -tA -f $D/10-schema-tests.sql 2>&1)
 echo "$out"
-echo "$out" | grep -qE "FAIL|ERROR" && { echo "==> CÓ TEST HỎNG"; exit 1; } || echo "==> TẤT CẢ ĐẠT"
+if echo "$out" | grep -qE "FAIL|ERROR"; then echo "==> CÓ TEST HỎNG"; exit 1; fi
+echo "==> TẤT CẢ ĐẠT"
+
+# seed.sql (sinh từ content/) phải nạp được vào schema sạch
+P -c "drop database if exists can_thu_seed" -c "create database can_thu_seed"
+P -d can_thu_seed -f $D/00-supabase-auth-stub.sql -f $D/../../supabase/migrations/0001_init.sql -f $D/../../supabase/seed.sql
+echo "==> SEED: $(psql -h $H -p $PORT -U postgres -d can_thu_seed -tAc "select count(*)||' loài, '||(select count(*) from locations)||' địa điểm, '||(select count(*) from location_species)||' cặp' from species")"

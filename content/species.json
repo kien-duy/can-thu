@@ -1,0 +1,74 @@
+[
+  {
+    "id": "ro_phi_den",
+    "nameVi": "Rô phi đen",
+    "scientific": "Oreochromis mossambicus",
+    "weightG": [120, 1500],
+    "typicalG": 450,
+    "summary": "Cá ăn tạp, khoẻ, sinh sản nhanh; loài quen thuộc nhất ở hồ dịch vụ miền Bắc lẫn miền Nam.",
+    "facts": [
+      "Ưa nước ấm 25–32 °C; nước dưới 18 °C thì ăn rất yếu.",
+      "Ăn mạnh lúc sáng sớm và chiều muộn, đặc biệt ngày nắng ấm.",
+      "Thích mồi có mùi tanh (tôm, cá) và hơi chua khi trời nóng.",
+      "Hay đi theo đàn; đàn cá con rỉa mồi làm phao nháy liên tục."
+    ],
+    "depth": "Sát đáy, trời ấm thì lên tầng giữa.",
+    "floatTell": "Sau vài cái nháy nhỏ, phao đè gọn xuống khoảng một nấc rồi đứng: giật lúc phao vừa đứng.",
+    "activeHours": [5, 6, 7, 8, 16, 17, 18],
+    "fight": { "power": 0.34, "stamina": 0.55, "surge": 0.35 },
+    "bite": {
+      "nibbleSec": [10, 30],
+      "windowSec": 1.0,
+      "decoy": { "amp": 0.25, "everySec": [1.2, 2.6] },
+      "signal": { "kind": "sink", "amp": 1.0 }
+    }
+  },
+  {
+    "id": "dieu_hong",
+    "nameVi": "Điêu hồng",
+    "scientific": "Oreochromis sp. (dòng rô phi đỏ lai)",
+    "weightG": [150, 1500],
+    "typicalG": 500,
+    "summary": "Dòng rô phi đỏ được lai chọn để nuôi thương phẩm; thân hồng cam, thịt dày, kéo khá lì.",
+    "facts": [
+      "Tập tính gần giống rô phi nhưng ít rỉa mồi hơn.",
+      "Chịu được nước hơi lợ, nên còn được nuôi ở vùng ven biển.",
+      "Ưa mồi tanh pha thơm; trời nóng ăn mạnh hơn trời mát.",
+      "Hồ dịch vụ thường thu giá điêu hồng cao hơn rô phi đen."
+    ],
+    "depth": "Tầng đáy và tầng giữa.",
+    "floatTell": "Phao được đỡ nhẹ lên chừng một nấc rồi dừng: giật lúc phao dừng.",
+    "activeHours": [6, 7, 8, 9, 15, 16, 17],
+    "fight": { "power": 0.4, "stamina": 0.6, "surge": 0.4 },
+    "bite": {
+      "nibbleSec": [12, 34],
+      "windowSec": 1.1,
+      "decoy": { "amp": 0.2, "everySec": [1.8, 3.4] },
+      "signal": { "kind": "rise", "amp": 1.0 }
+    }
+  },
+  {
+    "id": "chep",
+    "nameVi": "Chép",
+    "scientific": "Cyprinus carpio",
+    "weightG": [300, 6000],
+    "typicalG": 1400,
+    "summary": "Cá đáy có râu, sục bùn kiếm ăn; khôn, ăn thận trọng và kéo rất bền.",
+    "facts": [
+      "Dùng râu và miệng hút để lục mồi dưới đáy, thường để lại vệt bọt tăm sủi lên.",
+      "Thích mồi thơm ngọt: ngô, cám rang, mồi có mùi sữa.",
+      "Ăn mạnh khi nước mát (18–25 °C), lúc sáng sớm và đêm.",
+      "Hay quệt vào dây phao trước khi ăn, làm phao lắc nghiêng mà chưa phải tín hiệu ăn."
+    ],
+    "depth": "Sát đáy, nơi đáy bùn.",
+    "floatTell": "Phao chớp xuống rồi bật về (cá mới ngậm hờ), sau đó lịm dần xuống hơn một nấc không hồi lại: giật lúc đó.",
+    "activeHours": [4, 5, 6, 7, 19, 20, 21, 22],
+    "fight": { "power": 0.62, "stamina": 0.85, "surge": 0.6 },
+    "bite": {
+      "nibbleSec": [16, 40],
+      "windowSec": 1.4,
+      "decoy": { "amp": 0.35, "everySec": [2.2, 4.0] },
+      "signal": { "kind": "slow_sink", "amp": 1.5 }
+    }
+  }
+]

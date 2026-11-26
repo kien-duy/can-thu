@@ -2,7 +2,11 @@
 
 Game câu đài 3D trên web cho người vừa làm việc vừa muốn câu. Bạn thả câu rồi quay lại làm việc; khi cá bắt đầu rỉa mồi, game báo cho bạn quay lại.
 
-Trạng thái: **M0**: khung dự án và trang đo báo động khi tab ẩn. Vòng câu đầu tiên có ở M1.
+Trạng thái: **M1**, bản dựng thô chơi được: quăng, đọc phao, giật, kéo, vớt, rồi xem cá trong sổ tay. Có 1 địa điểm (Hồ Đồng Xanh) và 3 loài (rô phi đen, điêu hồng, chép). Khi tab ẩn, tiêu đề tab đổi và có tiếng "tách" lúc cá rỉa mồi.
+
+- `?fast=1`: thu nhỏ thời gian chờ, để thử nhanh.
+- `?seed=123`: lượt câu tái hiện được.
+- `?store=local`: lưu trên máy dù đã cấu hình Supabase.
 
 ## Chạy trên máy
 
@@ -17,11 +21,24 @@ npm run check        # typecheck + lint + unit test + build + e2e: chạy trư�
 - Trang đo báo động: `/spike.html`. Bấm "Đo đầy đủ", chuyển sang ứng dụng khác, đợi 10 phút, rồi quay lại bấm "Chép kết quả JSON".
 - Test schema DB (cần Postgres local ở 127.0.0.1:55432): `npm run test:db`
 
+## Bật lưu lên server (Supabase)
+
+1. Tạo project Supabase. Vào Authentication → Sign In / Providers, bật **Anonymous sign-ins**.
+2. SQL Editor: chạy `supabase/migrations/0001_init.sql`, rồi `supabase/seed.sql`.
+3. Chép `.env.example` thành `.env.local`, điền `VITE_SUPABASE_URL` và `VITE_SUPABASE_ANON_KEY` (key anon/publishable).
+4. `npm run dev`: góc trái sẽ ghi "Đang lưu lên server".
+
+Sửa `content/*.json` thì chạy `npm run seed:gen` để sinh lại `supabase/seed.sql` (có test bắt lỗi nếu quên).
+
 ## Cấu trúc
 
 | thư mục | nội dung |
 | --- | --- |
-| `src/sim/` | lõi mô phỏng, TypeScript thuần, tất định, test bằng Vitest |
+| `content/` | dữ liệu game: loài, địa điểm (kiểm tra bằng zod) |
+| `src/sim/` | lõi mô phỏng, TypeScript thuần, tất định: phao, cá cắn, kéo cá, đồng hồ, thời tiết |
+| `src/data/` | `GameRepository`: bản lưu trên máy và bản Supabase |
+| `src/ui/`, `src/game/` | cảnh 3D (React Three Fiber), khung phao SVG, HUD, sổ tay; store Zustand |
+| `src/alerts/` | báo động khi tab ẩn (timer trong worker) |
 | `src/spike/` | spike M0: worker + đo độ trễ báo động |
 | `supabase/migrations/` | schema Postgres + RLS + RPC |
 | `replica/` | tài liệu thiết kế: recon, kiến trúc, nhận diện, bảng tính năng. Ảnh trong `replica/screens/` chỉ để tham khảo, không đưa vào game |

@@ -40,12 +40,4 @@ body {
   font: 16px/1.5 system-ui, sans-serif;
 }
 
-.placeholder {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 48px 16px;
-}
 
-.placeholder a {
-  color: var(--primary);
-}

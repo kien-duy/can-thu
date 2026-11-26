@@ -58,6 +58,7 @@ tab hiện lại ── visibilitychange ──▶ worker gửi snapshot → c�
 click Giật ─── postMessage(strike, t) ▶ so t với cửa sổ giật → hooked | missed_early | missed_late
 ```
 
+- **Cách làm ở M1 (khác bản phác thảo trên):** reducer sim chạy ở main thread, vì nó tính theo mốc thời gian tuyệt đối nên timer bị bóp cũng không sai. Worker chỉ giữ lịch báo động (`src/alerts/timer.worker.ts`). Khi tab ẩn, trận kéo cá đứng yên (`tick` có `paused`). Kiểm tra ngày 2026-11-26 trong tab ẩn của Chromium: tiêu đề tab đổi đúng lúc cá rỉa và lúc mở cửa sổ giật.
 - Cửa sổ rỉa dài 10–40 s, cửa sổ giật khoảng 1 s (đã chốt). Người chơi quay lại trong lúc cá đang rỉa, mắt đã ở trên phao trước khi tới cửa sổ giật.
 - Chỉ bắn thông báo khi `document.hidden`. Xin quyền thông báo sau con cá đầu tiên, không xin lúc mở game.
 - Cảnh 3D chuyển `frameloop="never"` khi tab ẩn và `"demand"` ở chế độ văn phòng: không tốn GPU khi không ai nhìn.
