@@ -18,12 +18,12 @@ Cửa sổ rỉa dài cho người văn phòng,core,must,no,yes,Bản gốc nh�
 Mô phỏng chạy khi tab ẩn + báo động,office,must,no,yes,Bản gốc dừng hẳn khi ẩn tab
 Thông báo hệ thống / tiêu đề tab / âm thanh khi cá rỉa,office,must,no,yes,
 Chế độ văn phòng (cận cảnh phao nhẹ máy),office,must,no,yes,
-Kéo cá: ghì / tay mềm / dòng cá,core,must,yes,partial,ghì / tay mềm; chưa có dòng cá trái phải
-Đứt thẻo / gãy cần / cá vượt sức,core,must,yes,partial,đứt thẻo theo sức cần+dây; chưa có gãy cần
+Kéo cá: ghì / tay mềm / dòng cá,core,must,yes,yes,"ghì, tay mềm, dòng cá trái phải (A/D hoặc nút ◀ ▶)"
+Đứt thẻo / gãy cần / cá vượt sức,core,must,yes,yes,phần yếu hơn hỏng trước: đứt thẻo hoặc gãy cần; lưỡi nhỏ so với cá thì tuột
 Vớt cá khi cá đuối và gần bờ,core,must,yes,yes,
 Rọng + kết thúc ca cân cá bán tiền,economy,must,yes,yes,
 Sổ tay: danh mục loài + nhật ký từng con,handbook,must,partial,yes,Bản gốc chỉ có ??? + nhật ký; mình có đặc tính đời thật
-Cửa hàng đồ nghề cơ bản (cần/dây/lưỡi/phao/mồi),economy,must,yes,partial,"cần, dây, phao, nguyên liệu mồi; chưa có lưỡi"
+Cửa hàng đồ nghề cơ bản (cần/dây/lưỡi/phao/mồi),economy,must,yes,yes,"cần, dây, lưỡi (4 cỡ), phao, nguyên liệu mồi"
 Cảnh 3D ngồi câu,visual,should,yes,yes,
 Camera tự zoom vào phao khi có cá rỉa,visual,should,no,yes,
 Góc nhìn rộng toàn cảnh,visual,should,yes,yes,
