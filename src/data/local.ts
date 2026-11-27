@@ -16,7 +16,9 @@ interface LocalData {
   sightings?: Sighting[]
 }
 
-/** Lưu trên máy (localStorage). Dùng khi chưa cấu hình Supabase, và cho test. */
+const NO_SERVER = 'Bản này đang lưu trên máy (?store=local) nên chưa liên kết được tài khoản.'
+
+/** Lưu trên máy (localStorage). Dùng với ?store=local, và cho test. */
 export class LocalRepository implements GameRepository {
   readonly kind = 'local' as const
 
@@ -123,13 +125,23 @@ export class LocalRepository implements GameRepository {
     return { mode: 'local', providers: [] }
   }
 
-  async linkGoogle() {
-    throw new Error('Bản này chưa nối server nên chưa liên kết được tài khoản.')
+  async authConfig() {
+    return { google: false }
   }
 
-  async linkEmail() {
-    throw new Error('Bản này chưa nối server nên chưa liên kết được tài khoản.')
+  async linkGoogle() {
+    throw new Error(NO_SERVER)
   }
+
+  async register() {
+    throw new Error(NO_SERVER)
+  }
+
+  async login() {
+    throw new Error(NO_SERVER)
+  }
+
+  async logout() {}
 
   async deleteAccount() {
     this.storage.removeItem(this.key)

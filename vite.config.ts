@@ -1,9 +1,10 @@
 import { resolve } from 'node:path'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
+import { apiPlugin } from './server/vite-plugin.ts'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), apiPlugin()],
   build: {
     rollupOptions: {
       input: {
@@ -13,7 +14,8 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'server/**/*.test.ts'],
+    env: { PGLITE_DIR: 'memory' },
     environment: 'node',
   },
 })

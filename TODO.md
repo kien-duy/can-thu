@@ -1,26 +1,26 @@
 # TODO
 
-Cập nhật 2026-11-26. Đã xong M0 → M3, cộng thêm dòng cá, gãy cần, lưỡi câu. CI xanh ở commit `073f964`.
+Cập nhật 2026-11-27. Đã xong M0 → M3, cộng thêm dòng cá, gãy cần, lưỡi câu. CI xanh ở commit `073f964`.
 Trạng thái từng tính năng nằm trong [`replica/features.csv`](replica/features.csv): 37 yes, 3 partial, 10 no (chưa tính các mục skip).
 
 Kế hoạch đã chốt cho lần làm tiếp: cho subagent làm **lần lượt** từng mục bên dưới (mỗi lần một agent, xong thì chạy lại toàn bộ test rồi mới sang mục sau), để chơi được đầy đủ trên máy.
 
-## 1. Chạy Supabase local (chờ quyết định)
+## 1. Server và DB chạy trên máy (xong 2026-11-27)
 
-Chưa làm vì cần tải khoảng 5–7 GB image Docker (Supabase CLI `supabase` 3.4.0 + image chính thức từ Docker Hub). Ổ đĩa còn khoảng 35 GB. **Cần bạn đồng ý trước khi tải.**
+Bỏ Supabase, chuyển sang mô hình caro-clone: server Hono trong `server/`, Drizzle, PGlite khi chạy trên máy và Postgres (Neon) khi lên mạng. `npm run dev` là có cả game lẫn API, không cần Docker.
 
-- [ ] `npx supabase init`, đưa `supabase/migrations/0001_init.sql` và `supabase/seed.sql` vào config
-- [ ] Bật anonymous sign-ins và manual linking trong `supabase/config.toml`
-- [ ] Script sinh `.env.local` từ `supabase status` (URL + anon key; không đưa service_role vào `VITE_*`)
-- [ ] Chạy thử: đăng nhập khách, ghi cá qua RPC, sổ tay đọc từ server, hàng đợi offline (tắt server giữa chừng rồi bật lại), liên kết email qua Mailpit local, `supabase functions serve delete-account`
-- [ ] Script `npm run dev:full` + mục hướng dẫn trong README
-- [ ] Tuỳ chọn: một bộ e2e chạy với Supabase local (chạy tay, không đưa vào CI)
-- Không thử được trên máy: liên kết Google (cần OAuth client trong Google Cloud của bạn)
+- [x] Khách tạo ngay khi mở game; tạo tài khoản email + mật khẩu giữ nguyên cá đã câu; đăng nhập ở máy khác; đăng xuất; xoá tài khoản
+- [x] Quy tắc ghi cá chuyển từ RPC sang `server/game.ts`, có 19 unit test trên PGlite
+- [x] e2e `tests/e2e/account.spec.ts`: câu một con bằng khách, tạo tài khoản, đăng nhập ở trình duyệt khác thấy cùng sổ tay
+- [x] Sửa lỗi cũ trong hàng đợi offline: `flush()` lúc hàng đợi trống làm kẹt mọi lệnh ghi sau đó
+- [x] Màn chọn vé có lối "Đã có tài khoản? Đăng nhập" (trước đây màn này che menu, máy mới không đăng nhập được)
+- [ ] Liên kết Google: đã code (`/api/auth/google`), chưa thử vì cần OAuth client trong Google Cloud của bạn
+- [ ] Dọn tài khoản khách bỏ hoang (chưa câu con nào, quá 30 ngày không mở) và phiên hết hạn (`sweepSessions` đã có, chưa gọi định kỳ)
+- [ ] Quên mật khẩu: chưa có (cần gửi email)
 
 ## 2. Làm dở
 
 - [ ] Kiểu kéo cá thứ hai trong Cài đặt: rê chuột hoặc ngón tay để chỉnh góc cần (bản tham khảo có kiểu này)
-- [ ] Lưu tiến độ lên server, liên kết tài khoản: xong khi mục 1 chạy thử đạt
 
 ## 3. Rà lại sau ba tính năng mới
 
@@ -41,12 +41,12 @@ Chưa làm vì cần tải khoảng 5–7 GB image Docker (Supabase CLI `supabas
 - [ ] Đi dạo quanh hồ, quán nước
 - [ ] Đồ trang trí (chỉ đổi hình thức)
 - [ ] Bản mobile: bố cục dọc, nút chạm to, thử trên iPhone/Android
-- [ ] Bảng xếp hạng: cần chuyển phần tính kết quả lên server (xem "Gian lận" trong `replica/architecture.md`); làm sau mục 1
+- [ ] Bảng xếp hạng: cần chuyển phần tính kết quả lên server (xem "Gian lận" trong `replica/architecture.md`)
 
 ## 5. Việc chỉ bạn làm được
 
-- [ ] Tạo project Supabase cloud theo README (khi muốn đưa lên mạng)
-- [ ] Nối Cloudflare Pages: repo `kien-duy/can-thu`, build `npm run build`, output `dist`, biến `VITE_SUPABASE_URL` và `VITE_SUPABASE_ANON_KEY`
+- [ ] Khi muốn đưa lên mạng: tạo DB Neon và một host chạy Node (Render như caro-clone), theo mục "Deploy" trong README
+- [ ] Nếu muốn nút Google: tạo OAuth client trong Google Cloud, đặt `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET`
 - [ ] Đo báo động 10 phút trên Chrome và Safari thật: `npm run dev`, mở `/spike.html`, "Đo đầy đủ", bật thông báo, rời tab 10 phút, rồi chép JSON vào `replica/m0-spike-results.md`
 - [ ] Đồ hoạ: chọn model CC0 (Kenney, Quaternius, Poly Haven) hoặc nhờ người vẽ theo logo brief trong `replica/brand.md`; ghi nguồn vào `ASSETS.md`
 
@@ -54,6 +54,6 @@ Chưa làm vì cần tải khoảng 5–7 GB image Docker (Supabase CLI `supabas
 
 - Chạy trước mỗi lần push: `npm run typecheck && npm run lint && npm test && npm run build && npx playwright test --project=chromium --project=webkit`. Firefox không mở được trong Playwright trên máy này (lỗi môi trường); CI có chạy Firefox.
 - Đừng để `vite preview` chạy sẵn ở cổng 4173: Playwright sẽ dùng lại server đó và test nhầm bản build cũ.
-- Test DB: cần Postgres local ở 127.0.0.1:55432, rồi `npm run test:db`.
-- Sửa `content/*.json` (loài, địa điểm) thì chạy `npm run seed:gen`.
+- DB trên máy nằm ở `.data/pglite` (xoá là về trống). Đổi `server/db/schema.ts` thì `npm run db:generate`.
+- e2e chạy bản production thật (`npm start`, PGlite trong bộ nhớ) ở cổng 4173.
 - `?fast=1&seed=3&store=local` để thử nhanh; ở `?fast=1` store được gắn vào `globalThis.__canThu` cho e2e.

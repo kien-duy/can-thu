@@ -62,6 +62,8 @@ interface Store {
   handbook: HandbookEntry[]
   journal: CatchRecord[]
   panel: Panel
+  /** Thẻ mở sẵn khi vào bảng Tài khoản (màn chọn vé mở thẳng thẻ Đăng nhập). */
+  accountTab: 'register' | 'login'
   account?: Account
   notifyPrompt: boolean
   toasts: Toast[]
@@ -113,6 +115,7 @@ export const useGame: UseBoundStore<StoreApi<Store>> = create<Store>((set, get) 
   handbook: [],
   journal: [],
   panel: null,
+  accountTab: 'register',
   notifyPrompt: false,
   toasts: [],
   alerts: new Alerts(() => useGame.getState().cfg.location.nameVi),
@@ -141,6 +144,13 @@ export const useGame: UseBoundStore<StoreApi<Store>> = create<Store>((set, get) 
     }
     set({ booted: true })
     void get().refreshAccount()
+    // quay về từ Google (server/app.ts chuyển hướng về /?google=...)
+    const google = new URLSearchParams(location.search).get('google')
+    if (google) {
+      const text: Record<string, string> = { linked: 'Đã liên kết Google. Mọi thứ đã câu được giữ nguyên.', signed_in: 'Đã đăng nhập bằng Google.' }
+      get().toast(text[google] ?? 'Chưa liên kết được Google. Thử lại sau.', text[google] ? undefined : 'error')
+      history.replaceState(null, '', location.pathname)
+    }
     if (repo instanceof OutboxRepository) {
       addEventListener('online', () => void repo.flush().then(syncRepoError))
       setInterval(() => void repo.flush().then(syncRepoError), 30_000)

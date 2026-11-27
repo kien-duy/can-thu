@@ -1,5 +1,7 @@
 # Architecture: Cần Thủ (game câu đài 3D, làm lại theo cơ chế thể loại của "Câu Đài Hồ Dịch Vụ")
 
+> **Đổi hướng 2026-11-27: bỏ Supabase.** Theo mô hình caro-clone: server Node riêng (Hono, `server/`), Drizzle ORM, PGlite khi chạy trên máy và Postgres (Neon) khi lên mạng; tự làm phiên đăng nhập (cookie httpOnly, chỉ lưu hash token), khách tạo ngay khi mở game, liên kết bằng email + mật khẩu (scrypt) hoặc Google OAuth. Các RPC security definer trở thành route trong `server/app.ts` + hàm trong `server/game.ts`, giữ nguyên quy tắc kiểm tra; RLS không còn cần vì client không chạm DB. Lý do: chạy được đầy đủ trên máy mà không phải tải 5–7 GB image Docker của Supabase local, và cùng một mô hình với các dự án khác. Hosting chuyển từ Cloudflare Pages (tĩnh) sang host chạy Node; Cloudflare Workers + Hyperdrive vẫn là hướng sau này. Các mục bên dưới nói về Supabase là thiết kế cũ, giữ lại để tham khảo.
+
 Date: 2026-11-26. Nguồn: `recon.md`, `features.csv`, `brand.md`, cùng các quyết định đã chốt qua 4 vòng hỏi.
 
 ## Nguyên tắc

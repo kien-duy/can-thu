@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 /**
  * M1 "done": từ lúc mở game tới lúc có một dòng trong sổ tay.
- * ?fast=1 thu nhỏ thời gian chờ; ?seed cố định loài và nhịp; ?store=local để không cần Supabase.
+ * ?fast=1 thu nhỏ thời gian chờ; ?seed cố định loài và nhịp; ?store=local để lưu trên máy, không gọi server.
  */
 import { app, castLine, enterShift, fightUntilLandable, strikeOnWindow } from './helpers'
 

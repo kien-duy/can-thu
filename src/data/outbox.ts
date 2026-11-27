@@ -52,24 +52,28 @@ export class OutboxRepository implements GameRepository {
 
   /** Gửi hết hàng đợi theo thứ tự. Lỗi thì dừng, giữ phần còn lại cho lần sau. */
   flush(): Promise<void> {
-    this.flushing ??= (async () => {
-      try {
-        let ops = this.pending()
-        while (ops.length > 0) {
-          await this.send(ops[0]!)
-          ops = this.pending().slice(1)
-          this.save(ops)
-        }
-        this.failures = 0
-        this.lastError = undefined
-      } catch (e) {
-        this.failures++
-        this.lastError = (e as Error).message ?? String(e)
-      } finally {
-        this.flushing = null
-      }
-    })()
+    // .finally chạy sau khi gán: hàng đợi trống thì drain() xong ngay, đặt null bên trong drain() sẽ
+    // bị phép gán ghi đè và hàng đợi kẹt mãi (lỗi cũ).
+    this.flushing ??= this.drain().finally(() => {
+      this.flushing = null
+    })
     return this.flushing
+  }
+
+  private async drain() {
+    try {
+      let ops = this.pending()
+      while (ops.length > 0) {
+        await this.send(ops[0]!)
+        ops = this.pending().slice(1)
+        this.save(ops)
+      }
+      this.failures = 0
+      this.lastError = undefined
+    } catch (e) {
+      this.failures++
+      this.lastError = (e as Error).message ?? String(e)
+    }
   }
 
   private send(o: Op): Promise<void> {
@@ -159,11 +163,27 @@ export class OutboxRepository implements GameRepository {
   account() {
     return this.inner.account()
   }
-  linkGoogle() {
+  authConfig() {
+    return this.inner.authConfig()
+  }
+  async linkGoogle() {
+    await this.flush()
     return this.inner.linkGoogle()
   }
-  linkEmail(email: string) {
-    return this.inner.linkEmail(email)
+  async register(email: string, password: string) {
+    await this.flush()
+    return this.inner.register(email, password)
+  }
+  /** Đổi người chơi: gửi nốt hàng đợi của người cũ, rồi bỏ phần không gửi được. */
+  async login(email: string, password: string) {
+    await this.flush()
+    await this.inner.login(email, password)
+    this.save([])
+  }
+  async logout() {
+    await this.flush()
+    await this.inner.logout()
+    this.save([])
   }
   async deleteAccount() {
     await this.inner.deleteAccount()

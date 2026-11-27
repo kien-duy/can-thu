@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { levelOf, xpForLevel } from '../game/player'
 import { useGame } from '../game/store'
-import { Sheet, xu } from './Sheet'
+import { Sheet, Tabs, xu } from './Sheet'
 
 export function AccountPanel() {
   const account = useGame((s) => s.account)
@@ -9,13 +9,22 @@ export function AccountPanel() {
   const player = useGame((s) => s.player)
   const toast = useGame((s) => s.toast)
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [mode, setMode] = useState<'register' | 'login'>(() => useGame.getState().accountTab)
+  const [google, setGoogle] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  useEffect(() => {
+    repo
+      .authConfig()
+      .then((c) => setGoogle(c.google))
+      .catch(() => setGoogle(false))
+  }, [repo])
   const level = levelOf(player.xp)
-  const run = async (f: () => Promise<void>, okText: string) => {
+  const run = async (f: () => Promise<void>, okText: string, refresh = true) => {
     try {
       await f()
       toast(okText)
-      await useGame.getState().refreshAccount()
+      if (refresh) await useGame.getState().refreshAccount()
     } catch (e) {
       toast(String((e as Error).message ?? e), 'error')
     }
@@ -34,37 +43,78 @@ export function AccountPanel() {
           </div>
         </section>
         {account?.mode === 'local' && (
-          <p>
-            Bản này chưa nối server: tiến độ và sổ tay nằm trên trình duyệt của máy này. Xoá dữ liệu trình duyệt là mất. (Chủ game bật Supabase là tự chuyển sang lưu server.)
-          </p>
+          <p>Bản này đang lưu trên trình duyệt của máy này (?store=local). Xoá dữ liệu trình duyệt là mất.</p>
         )}
         {account?.mode === 'guest' && (
           <>
-            <p>Bạn đang chơi bằng tài khoản khách. Liên kết để giữ sổ tay khi đổi máy hay xoá trình duyệt. Mọi thứ đã câu được giữ nguyên.</p>
-            <button type="button" className="primary" onClick={() => void run(() => repo.linkGoogle(), 'Đang chuyển sang Google…')}>
-              Liên kết Google
-            </button>
+            <p>Bạn đang chơi bằng tài khoản khách. Tạo tài khoản để giữ sổ tay khi đổi máy hay xoá trình duyệt. Mọi thứ đã câu được giữ nguyên.</p>
+            {google && (
+              <button type="button" className="primary" onClick={() => void run(() => repo.linkGoogle(), 'Đang chuyển sang Google…', false)}>
+                Liên kết Google
+              </button>
+            )}
+            <Tabs
+              value={mode}
+              onChange={setMode}
+              options={[
+                { id: 'register', label: 'Tạo tài khoản' },
+                { id: 'login', label: 'Đã có tài khoản' },
+              ]}
+            />
             <form
-              className="row"
+              className="stack"
+              data-testid={`${mode}-form`}
               onSubmit={(e) => {
                 e.preventDefault()
-                void run(() => repo.linkEmail(email), `Đã gửi thư xác nhận tới ${email}. Bấm link trong thư là xong.`)
+                if (mode === 'register') void run(() => repo.register(email, password), 'Đã tạo tài khoản. Đăng nhập ở máy khác là thấy cùng sổ tay.')
+                else
+                  void run(async () => {
+                    await repo.login(email, password)
+                    location.reload()
+                  }, 'Đã đăng nhập.')
               }}
             >
-              <label className="sr-only" htmlFor="link-email">
-                Email
+              {mode === 'login' && <p className="warn small">Đăng nhập tài khoản khác thì tiến độ khách đang chơi trên máy này sẽ bị bỏ.</p>}
+              <label>
+                <span className="muted small">Email</span>
+                <input type="email" name="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
               </label>
-              <input id="link-email" type="email" required placeholder="email@cuaban.vn" value={email} onChange={(e) => setEmail(e.target.value)} />
-              <button type="submit" className="ghost">
-                Liên kết email
+              <label>
+                <span className="muted small">Mật khẩu (ít nhất 8 ký tự)</span>
+                <input
+                  type="password"
+                  name="password"
+                  autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                  minLength={8}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </label>
+              <button type="submit" className={google ? 'ghost' : 'primary'}>
+                {mode === 'register' ? 'Tạo tài khoản' : 'Đăng nhập'}
               </button>
             </form>
           </>
         )}
         {account?.mode === 'linked' && (
-          <p>
-            Đã liên kết{account.email ? ` với ${account.email}` : ''} ({account.providers.join(', ')}). Đăng nhập cùng tài khoản ở máy khác là thấy cùng sổ tay.
-          </p>
+          <>
+            <p data-testid="linked">
+              Đã liên kết{account.email ? ` với ${account.email}` : ''} ({account.providers.join(', ')}). Đăng nhập cùng tài khoản ở máy khác là thấy cùng sổ tay.
+            </p>
+            <button
+              type="button"
+              className="ghost"
+              onClick={() =>
+                void run(async () => {
+                  await repo.logout()
+                  location.reload()
+                }, 'Đã đăng xuất.')
+              }
+            >
+              Đăng xuất
+            </button>
+          </>
         )}
         <h3>Xoá dữ liệu</h3>
         {!confirmDelete ? (

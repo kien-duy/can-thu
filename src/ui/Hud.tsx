@@ -39,7 +39,7 @@ export function StatusCard() {
       <div className="muted">
         <span data-testid="hud-coins">{xu(coins)}</span> · Cấp {levelOf(xp)}
       </div>
-      <div className="muted small">{repoKind === 'supabase' ? 'Đang lưu lên server' : 'Đang lưu trên máy này'}</div>
+      <div className="muted small">{repoKind === 'server' ? 'Đang lưu lên server' : 'Đang lưu trên máy này'}</div>
     </section>
   )
 }

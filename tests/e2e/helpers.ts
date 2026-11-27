@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test'
 
-/** Tiện ích chung cho e2e. ?fast=1 thu nhỏ thời gian; ?seed cố định loài và nhịp; ?store=local không cần Supabase. */
+/** Tiện ích chung cho e2e. ?fast=1 thu nhỏ thời gian; ?seed cố định loài và nhịp; ?store=local lưu trên máy, không gọi server. */
 export const app = (page: Page) => page.getByTestId('app')
 
 /**

@@ -1,16 +1,14 @@
+import { ApiRepository } from './api'
 import { LocalRepository } from './local'
 import { OutboxRepository } from './outbox'
-import { SupabaseRepository } from './supabase'
 import type { GameRepository } from './types'
 
 export * from './types'
 export { OutboxRepository }
 
-/** Có cấu hình Supabase thì lưu lên server (qua hàng đợi offline), không thì lưu trên máy. `?store=local` ép lưu trên máy. */
+/** Mặc định lưu lên server của game (qua hàng đợi offline). `?store=local` ép lưu trên máy (test, chơi không cần server). */
 export function createRepository(): GameRepository {
-  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
   const forceLocal = new URLSearchParams(location.search).get('store') === 'local'
-  if (url && key && !forceLocal) return new OutboxRepository(new SupabaseRepository(url, key))
-  return new LocalRepository()
+  if (forceLocal) return new LocalRepository()
+  return new OutboxRepository(new ApiRepository())
 }

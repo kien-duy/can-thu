@@ -1,6 +1,6 @@
 /**
- * Cửa vào dữ liệu duy nhất. Game chỉ biết interface này; bản Supabase, bản lưu trên máy
- * (và sau này bản Cloudflare Worker) đều cài cùng một interface.
+ * Cửa vào dữ liệu duy nhất. Game chỉ biết interface này; bản gọi server (server/app.ts) và bản lưu
+ * trên máy đều cài cùng một interface.
  */
 export type WeatherKind = 'sunny' | 'cloudy' | 'rain' | 'storm' | 'fog'
 
@@ -65,15 +65,15 @@ export interface StoredPlayer {
 }
 
 export interface Account {
-  /** 'local' = chưa nối server, dữ liệu chỉ ở máy này */
+  /** 'local' = không nối server (?store=local), dữ liệu chỉ ở máy này */
   mode: 'local' | 'guest' | 'linked'
   email?: string
   providers: string[]
 }
 
 export interface GameRepository {
-  readonly kind: 'local' | 'supabase'
-  /** Đăng nhập khách nếu chưa có phiên. */
+  readonly kind: 'local' | 'server'
+  /** Tạo khách nếu chưa có phiên. */
   init(): Promise<void>
   loadPlayer(): Promise<StoredPlayer | null>
   /** Trả về version mới, hoặc -1 nếu trên server đã có bản mới hơn (máy khác vừa lưu). */
@@ -88,13 +88,19 @@ export interface GameRepository {
   recordSighting(creatureId: string, locationId: string, seenAt: number): Promise<void>
   sightings(): Promise<Sighting[]>
   account(): Promise<Account>
+  /** Server có bật đăng nhập Google không. */
+  authConfig(): Promise<{ google: boolean }>
+  /** Chuyển trình duyệt sang Google; quay về thì khách thành tài khoản, mọi thứ giữ nguyên. */
   linkGoogle(): Promise<void>
-  /** Gửi thư xác nhận; tài khoản thành chính thức khi bấm link trong thư. */
-  linkEmail(email: string): Promise<void>
+  /** Khách đặt email + mật khẩu: thành tài khoản chính thức, giữ nguyên mọi thứ đã câu. */
+  register(email: string, password: string): Promise<void>
+  /** Đăng nhập tài khoản có sẵn. Tiến độ khách trên máy này bị bỏ. */
+  login(email: string, password: string): Promise<void>
+  logout(): Promise<void>
   deleteAccount(): Promise<void>
 }
 
-/** Tổng hợp sổ tay theo loài. Cùng nghĩa với view handbook_entries trong Postgres. */
+/** Tổng hợp sổ tay theo loài. Cùng nghĩa với handbook() trong server/game.ts. */
 export function aggregateHandbook(catches: readonly CatchRecord[]): HandbookEntry[] {
   const by = new Map<string, CatchRecord[]>()
   for (const c of catches) by.set(c.speciesId, [...(by.get(c.speciesId) ?? []), c])

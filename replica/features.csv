@@ -1,7 +1,7 @@
 feature,area,priority,original,clone,notes
 Chơi ngay bằng tài khoản khách,onboarding,must,yes,yes,Bản gốc có 3 modal trước khi chơi; mình vào thẳng ô câu
-Liên kết Google/email để giữ tiến độ,account,must,yes,partial,"Supabase Auth; bản gốc dùng Google hoặc user+mật khẩu; đã code, chưa chạy thử vì chưa có project Supabase"
-Lưu tiến độ lên server,account,must,partial,partial,Bản gốc mặc định lưu localStorage; đã code + hàng đợi offline; chưa chạy thử với Supabase thật
+Liên kết Google/email để giữ tiến độ,account,must,yes,partial,"Server riêng: email + mật khẩu đã chạy thử (e2e đăng nhập ở máy khác); Google đã code, chưa thử vì cần OAuth client"
+Lưu tiến độ lên server,account,must,partial,yes,"Bản gốc mặc định lưu localStorage; server Hono + Drizzle (PGlite/Postgres) + hàng đợi offline, có unit test và e2e"
 Hướng dẫn trong lúc chơi (quăng/canh/giật/vớt),onboarding,must,yes,yes,Coach bar 4 bước
 Chọn địa điểm câu,locations,must,yes,yes,"3 địa điểm: hồ dịch vụ, sông, hồ núi"
 Vé ca câu theo giờ (hồ dịch vụ),locations,must,yes,yes,Bản gốc 3–8 tiếng giờ game; mình theo giờ thật 1/2/4 tiếng

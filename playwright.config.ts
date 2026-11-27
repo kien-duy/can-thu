@@ -13,8 +13,9 @@ export default defineConfig({
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
   webServer: {
-    command: 'npm run build && npm run preview',
-    url: 'http://localhost:4173',
+    // Bản production thật (API + dist trên một cổng), DB PGlite trong bộ nhớ: mỗi lần chạy là DB trống.
+    command: 'npm run build && PORT=4173 PGLITE_DIR=memory npm start',
+    url: 'http://localhost:4173/healthz',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

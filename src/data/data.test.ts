@@ -1,7 +1,4 @@
-import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { LOCATIONS, SPECIES } from '../content'
-import { seedSql } from '../content/seedSql'
 import { LocalRepository } from './local'
 import { aggregateHandbook, type CatchRecord } from './types'
 
@@ -44,12 +41,6 @@ describe('sổ tay', () => {
   })
 })
 
-describe('seed', () => {
-  it('supabase/seed.sql khớp với content (chạy `npm run seed:gen` nếu hỏng)', () => {
-    expect(readFileSync('supabase/seed.sql', 'utf8')).toBe(seedSql(SPECIES, LOCATIONS))
-  })
-})
-
 describe('lưu tiến độ', () => {
   it('ghi theo version: máy khác đã lưu bản mới hơn thì trả -1', async () => {
     const repo = new LocalRepository(memStorage())
@@ -88,6 +79,16 @@ describe('hàng đợi offline', () => {
     })
     return { inner, wrapped, calls, up: () => (down = false) }
   }
+
+  it('flush lúc hàng đợi trống không làm kẹt các lệnh ghi sau đó', async () => {
+    const { OutboxRepository } = await import('./outbox')
+    const inner = new LocalRepository(memStorage())
+    const box = new OutboxRepository(inner, memStorage())
+    await box.init()
+    await box.recordCatch({ ...base, id: 'k1', speciesId: 'ro_phi_den', weightG: 500, caughtAt: 1, localHour: 7 })
+    expect(box.pending()).toHaveLength(0)
+    expect(await inner.recentCatches(10)).toHaveLength(1)
+  })
 
   it('mất mạng: giữ cá trong hàng đợi, sổ tay vẫn thấy; có mạng lại thì gửi đúng thứ tự, không trùng', async () => {
     const { OutboxRepository } = await import('./outbox')

@@ -12,6 +12,7 @@ export function ShiftPicker() {
   const player = useGame((s) => s.player)
   const now = useGame((s) => Math.floor(s.now / 60_000) * 60_000)
   const start = useGame((s) => s.startShift)
+  const guest = useGame((s) => s.account?.mode === 'guest')
   const [pick, setPick] = useState(LOCATIONS[0]!.id)
   const level = levelOf(player.xp)
   const loc = locationOf(pick)
@@ -24,6 +25,22 @@ export function ShiftPicker() {
         <h2>Hôm nay câu ở đâu?</h2>
         <p className="muted">
           Bạn có <strong data-testid="coins">{xu(player.coins)}</strong> · Cấp {level}
+          {guest && (
+            <>
+              {' · '}
+              <button
+                type="button"
+                className="link"
+                data-testid="picker-login"
+                onClick={() => {
+                  useGame.setState({ accountTab: 'login' })
+                  useGame.getState().openPanel('account')
+                }}
+              >
+                Đã có tài khoản? Đăng nhập
+              </button>
+            </>
+          )}
         </p>
         <div className="loc-row" role="radiogroup" aria-label="Địa điểm">
           {LOCATIONS.map((l) => {
