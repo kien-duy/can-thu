@@ -729,3 +729,47 @@ button:focus-visible {
     animation: none;
   }
 }
+
+/* Kiểu kéo "rê": mặt kéo cá phủ màn hình trong trận kéo, dưới thanh trên và thanh hành động */
+.fight-pad {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  cursor: grab;
+}
+.fight-pad:active {
+  cursor: grabbing;
+}
+.fight-pad__zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  transition: background-color 0.15s;
+}
+.fight-pad__zone--left {
+  left: 0;
+}
+.fight-pad__zone--right {
+  right: 0;
+}
+/* vùng dòng cần đang chọn: mờ dần từ mép màn hình vào giữa, không thành một tấm phủ cạnh cứng giữa cảnh */
+.fight-pad__zone--left.is-active {
+  background: linear-gradient(to right, color-mix(in srgb, var(--primary) 16%, transparent), transparent);
+}
+.fight-pad__zone--right.is-active {
+  background: linear-gradient(to left, color-mix(in srgb, var(--primary) 16%, transparent), transparent);
+}
+.fight-pad__aim {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--primary) 45%, transparent);
+}

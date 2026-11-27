@@ -80,14 +80,15 @@ describe('cân phao', () => {
 
 describe('ca câu và bán cá', () => {
   it('vé trừ xu; không đủ thì không vào được', () => {
-    expect(buyTicket(newPlayer(), loc, 2)).toMatchObject({ ok: true, state: { coins: 400 } })
+    expect(buyTicket(newPlayer(), loc, 2)).toMatchObject({ ok: true, state: { coins: 450 } }) // vé 2 tiếng 50 xu
     expect(buyTicket({ ...newPlayer(), coins: 10 }, loc, 1).ok).toBe(false)
   })
   it('bán cá theo kg', () => {
-    expect(salePrice('ro_phi_den', 1000)).toBe(35)
+    expect(salePrice('ro_phi_den', 1000)).toBe(18)
     const r = sell(newPlayer(), [{ speciesId: 'dieu_hong', weightG: 800 }, { speciesId: 'diec', weightG: 250 }])
-    expect(r.earned).toBe(40 + 30)
-    expect(r.state.coins).toBe(570)
+    // điêu hồng 25 xu/kg × 0,8 kg + diếc 60 xu/kg × 0,25 kg
+    expect(r.earned).toBe(20 + 15)
+    expect(r.state.coins).toBe(535)
   })
   it('một ca 2 tiếng câu bình thường có lãi (khoảng 8 con rô phi cỡ thường)', () => {
     const fish = Array.from({ length: 8 }, () => ({ speciesId: 'ro_phi_den', weightG: 450 }))

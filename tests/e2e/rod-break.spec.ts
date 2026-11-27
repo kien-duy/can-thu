@@ -45,3 +45,12 @@ test('dây khoẻ hơn cần: Đồ nghề cảnh báo; ghì quá tải thì gã
   })
   expect(rods).toEqual({ owned: ['can_tre_36'], equipped: 'can_tre_36' })
 })
+
+test('cửa hàng: người mới cần tre, dây 1.5 có cảnh báo cần gãy trước thẻo; dây đang có thì không', async ({ page }) => {
+  await enterShift(page)
+  await page.getByTestId('open-shop').click()
+  await expect(page.getByTestId('shop-risk-day_15')).toHaveText('Khoẻ hơn cần tre 3m6 đang lắp: quá tải thì cần gãy trước thẻo.')
+  await expect(page.getByRole('button', { name: '250 xu' })).toHaveAccessibleDescription(/cần gãy trước thẻo/)
+  await expect(page.getByTestId('shop-risk-day_10')).toHaveCount(0)
+  await expect(page.getByTestId('shop-risk-can_carbon_45')).toHaveCount(0)
+})

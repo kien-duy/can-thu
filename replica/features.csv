@@ -38,7 +38,7 @@ Cấp độ/XP mở khoá địa điểm và đồ,economy,should,partial,yes,"s
 Nhiệm vụ ngày,economy,should,yes,yes,
 Kỷ lục cá to nhất theo loài,handbook,should,yes,yes,
 Cài đặt chất lượng đồ hoạ Thấp/Vừa/Cao,settings,should,no,yes,
-Cài đặt cỡ khung phao / kiểu kéo cá,settings,should,yes,partial,cỡ khung phao có; kiểu kéo cá mới có một kiểu (giữ để ghì)
+Cài đặt cỡ khung phao / kiểu kéo cá,settings,should,yes,yes,"cỡ khung phao có; hai kiểu kéo cá: nút và phím (giữ để ghì, A/D) hoặc rê chuột, ngón tay (giữ để ghì, rê ngang để dòng)"
 Thành tích có bậc,meta,could,yes,no,Bản gốc 101 bậc / 34 danh hiệu
 Mặt cắt 2D,visual,could,yes,no,
 Hàng xóm NPC câu cá quanh hồ,visual,could,yes,no,

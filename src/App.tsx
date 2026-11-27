@@ -3,6 +3,7 @@ import { useGame } from './game/store'
 import { waitStatus } from './sim/game'
 import { AccountPanel } from './ui/AccountPanel'
 import { useGameLoop, useKeyboard } from './ui/controls'
+import { FightPad } from './ui/FightPad'
 import { FloatView } from './ui/FloatView'
 import { Handbook } from './ui/Handbook'
 import { ActionBar, NotifyPrompt, StatusCard, Toasts } from './ui/Hud'
@@ -37,6 +38,7 @@ export function App() {
   const shiftOver = useGame((s) => s.shiftOver)
   const paidShift = useGame((s) => s.session?.kind === 'paid_shift')
   const wide = useGame((s) => s.prefs.wide)
+  const fightStyle = useGame((s) => s.prefs.fightStyle)
   const claimable = useGame(claimableCount)
   useGameLoop()
   useKeyboard()
@@ -53,6 +55,7 @@ export function App() {
       data-wait={wait ?? ''}
       data-tension={tension.toFixed(2)}
       data-fish-dir={fishDir}
+      data-fight-style={fightStyle}
       data-repo={repoKind}
       data-shift={!booted ? 'loading' : shiftOver ? 'over' : inShift ? 'on' : 'none'}
     >
@@ -63,6 +66,8 @@ export function App() {
           </Suspense>
         </SceneBoundary>
       )}
+      {/* mặt kéo cá nằm trên cảnh 3D nhưng dưới thanh trên, khung phao và thanh hành động (cùng z-index thì phần tử sau vẽ đè) */}
+      <FightPad />
       <header className="topbar">
         <StatusCard />
         <nav className="topbar__actions" aria-label="Menu">

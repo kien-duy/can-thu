@@ -63,7 +63,38 @@ describe('lưỡi câu: tuột lưỡi', () => {
   it('chỉ có cơ hội tuột khi cá nặng hơn sức lưỡi', () => {
     expect(unhookChance(5000)).toBe(0)
     expect(unhookChance(1500, 2000)).toBe(0)
-    expect(unhookChance(4000, 2000)).toBeCloseTo(0.25)
+    // trước đây 0.25 × (cân/sức − 1), trần 0.5: người mới mất chừng 4 con trong 10 con trên 2 kg.
+    // nay 0.08 × (cân/sức − 1), trần 0.3 (xem bài đo dưới)
+    expect(unhookChance(4000, 2000)).toBeCloseTo(0.08)
+    expect(unhookChance(6000, 2000)).toBeCloseTo(0.16)
+    expect(unhookChance(20_000, 2000)).toBeCloseTo(0.3)
+  })
+  it('người mới kéo đúng bài với lưỡi số 3: cá trên 2 kg ở Hồ Đồng Xanh tuột không quá 1 con trong 4', () => {
+    const pond = LOCATIONS.find((l) => l.id === 'ho_dong_xanh')!
+    const rng = createRng(2026)
+    const s = setup({ hook: hookOf('luoi_3'), depthCm: pond.bottomDepthCm })
+    /** nhìn thanh căng dây mỗi 150 ms: dòng cần ngược hướng cá, ghì khi căng dưới 0.7, thả khi căng hơn */
+    const play = (speciesId: string, weightG: number, seed: number, hookId: string) => {
+      let f = initFight(speciesOf(speciesId), weightG, 8, seed, 1, 1, 1, hookOf(hookId).bestForG[1])
+      for (let t = 0; t < 180_000 && outcomeOf(f) === 'fighting'; t += 150) {
+        f = { ...f, rodSide: f.fishDir === 0 ? 0 : f.fishDir === 1 ? -1 : 1 }
+        f = advanceFight(f, 150, f.tension < 0.7)
+      }
+      return f
+    }
+    let n = 0
+    let torn = 0
+    let tornBig = 0
+    for (let seed = 1; n < 400; seed++) {
+      const p = planSpeciesBite(rng, pond, SPECIES, { castAt: 0, settledAt: 0, hour: 12, setup: s })
+      if (p.weightG <= 2000) continue
+      n++
+      if (play(p.speciesId, p.weightG, seed, 'luoi_3').unhooked) torn++
+      if (p.weightG <= 6000 && play(p.speciesId, p.weightG, seed, 'luoi_5').unhooked) tornBig++
+    }
+    expect(torn / n).toBeLessThanOrEqual(0.25)
+    expect(torn / n).toBeGreaterThan(0.1) // lưỡi to vẫn đáng mua
+    expect(tornBig).toBe(0)
   })
   it('lưỡi số 3 với chép 5 kg hay tuột; lưỡi số 5 thì không bao giờ', () => {
     let small = 0

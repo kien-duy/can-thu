@@ -1,7 +1,7 @@
 # TODO
 
 Cập nhật 2026-11-27. Đã xong M0 → M3, cộng thêm dòng cá, gãy cần, lưỡi câu. CI xanh ở commit `073f964`.
-Trạng thái từng tính năng nằm trong [`replica/features.csv`](replica/features.csv): 37 yes, 3 partial, 10 no (chưa tính các mục skip).
+Trạng thái từng tính năng nằm trong [`replica/features.csv`](replica/features.csv): 39 yes, 1 partial, 10 no (chưa tính các mục skip).
 
 Kế hoạch đã chốt cho lần làm tiếp: cho subagent làm **lần lượt** từng mục bên dưới (mỗi lần một agent, xong thì chạy lại toàn bộ test rồi mới sang mục sau), để chơi được đầy đủ trên máy.
 
@@ -20,15 +20,16 @@ Bỏ Supabase, chuyển sang mô hình caro-clone: server Hono trong `server/`, 
 
 ## 2. Làm dở
 
-- [ ] Kiểu kéo cá thứ hai trong Cài đặt: rê chuột hoặc ngón tay để chỉnh góc cần (bản tham khảo có kiểu này)
+- [x] Kiểu kéo cá thứ hai trong Cài đặt: rê chuột hoặc ngón tay để chỉnh góc cần (bản tham khảo có kiểu này). Xong 2026-11-27: Cài đặt → Kiểu kéo cá → "Rê chuột, ngón tay". Giữ = ghì, nhấc = tay mềm, vị trí ngang chia ba vùng (vùng giữa 40% giữ cần thẳng) gửi cùng sự kiện `steer` như A/D. e2e `tests/e2e/drag-fight.spec.ts`. Chưa thử trên máy cảm ứng thật
 
 ## 3. Rà lại sau ba tính năng mới
 
-- [ ] Xem bằng mắt trong cảnh 3D: dây kéo theo hướng cá chạy, cần nghiêng khi dòng cá, hình cần gãy (chưa ai xem; e2e vòng chơi chạy ở chế độ văn phòng)
-- [ ] Độ khó với người mới: lưỡi số 3 khởi đầu làm cá trên 2 kg hay tuột (xác suất mỗi nhịp vùng chạy = `min(0.5, 0.25 × (cân/2000 − 1))`). Cân nhắc giảm, hoặc gợi ý mua lưỡi số 5 ngay sau lần tuột đầu tiên
-- [ ] Dây 1.5 mua được từ cấp 1; lắp với cần tre thì cần gãy trước thẻo. Đã có cảnh báo trong khay; xem có nên gợi ý ngay trong cửa hàng không
-- [ ] Lời gợi ý trong trận kéo đổi liên tục trong vùng `aria-live`: trình đọc màn hình đọc quá nhiều. Chỉ báo khi đổi hướng cá, hoặc tách khỏi `aria-live`
-- [ ] Kinh tế: ca 2 tiếng chơi chăm kiếm khá nhiều xu; đo lại thu nhập theo giờ và chỉnh giá vé, giá cá
+- [x] Xem bằng mắt trong cảnh 3D (xong 2026-11-27, chụp bằng Playwright ở góc ngồi câu và góc rộng). Đã sửa trong `Scene3D.tsx`: dây trước đây là nét 1 px màu trắng, gần như không thấy trên nền trời, và bắt đầu từ một điểm cố định giữa không trung chứ không phải ngọn cần; nay là dây vàng huỳnh quang dày 2 px, đi ra từ đúng ngọn cần, võng khi chùng, có vệt bọt và vòng gợn ở chỗ cá. Cần trước đây xoay quanh điểm giữa (gốc cần văng ngược chiều); nay xoay quanh tay cầm, nghiêng rõ hơn, ngọn cong về phía cá theo độ căng. Gãy cần trước đây là hai que bắt chéo chữ X, nằm khuất sau lời gợi ý; nay khúc ngọn gập xuống ở chỗ nối, rũ sang phải, có dằm tre sáng màu ở vết gãy, dây chùng thõng xuống nước. Mặt kéo cá kiểu "rê" nay nằm dưới khung phao (trước đây phủ màu lên khung phao), vùng dòng cần mờ dần từ mép vào thay cho tấm phủ cạnh cứng
+- [ ] Góc rộng toàn cảnh: cần câu nằm khuất sau thanh hành động và bảng kéo cá, nên ở góc này không thấy cần nghiêng hay cần gãy (dây và vệt bọt chỗ cá thì vẫn thấy). Muốn thấy thì phải đổi vị trí camera góc rộng
+- [x] Độ khó với người mới (xong 2026-11-27): đo 6000 trận với lưỡi số 3 ở Hồ Đồng Xanh, người kéo đúng bài: cá trên 2 kg tuột 41 % (2–3 kg 15 %, 3–4 kg 46 %). Nay xác suất mỗi nhịp vùng chạy = `min(0.3, 0.08 × (cân/sức lưỡi − 1))`: tuột 22 % (2–3 kg 6 %, 3–4 kg 18 %, 4–6 kg 49 %); lưỡi số 5 vẫn giữ trọn cá tới 6 kg. Lần tuột đầu tiên hiện gợi ý mua lưỡi số 5 kèm giá (một lần, cờ `hookTipShown`)
+- [x] Dây 1.5 mua được từ cấp 1; lắp với cần tre thì cần gãy trước thẻo. Cửa hàng nay cảnh báo ngay trên món dây khoẻ hơn cần đang lắp, và trên món cần yếu hơn dây đang lắp (xong 2026-11-27)
+- [x] Lời gợi ý trong trận kéo đổi liên tục trong vùng `aria-live`: trình đọc màn hình đọc quá nhiều. Đã tách: lời gợi ý trên màn hình không còn `aria-live`; một vùng đọc ẩn riêng chỉ đổi khi cá đổi hướng, cá đuối, dây sắp đứt, hoặc có kết quả (xong 2026-11-27)
+- [x] Kinh tế (xong 2026-11-27): đo bằng sim thật, 100 ca mỗi cấu hình. Trước đó chơi chăm ở Hồ Đồng Xanh lãi ~850 xu/giờ, nửa idle ~60, Hồ núi Mây gấp đôi hồ dịch vụ. Đã chia đôi giá cá, vé và giá mồi; hệ số bán ở sông 0,7→0,85, ở Hồ núi Mây 0,7→0,4. Nay chơi chăm lãi ~430 xu/giờ, nửa idle ~30–45; sông bằng ~0,65 lần hồ dịch vụ, núi ~1,1 lần. Bảng số liệu và mục tiêu ở [`replica/economy.md`](replica/economy.md)
 
 ## 4. M4: có thì tốt
 

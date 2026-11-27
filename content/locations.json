@@ -16,15 +16,15 @@
     "tickets": [
       {
         "hours": 1,
-        "priceXu": 60
+        "priceXu": 30
       },
       {
         "hours": 2,
-        "priceXu": 100
+        "priceXu": 50
       },
       {
         "hours": 4,
-        "priceXu": 180
+        "priceXu": 90
       }
     ],
     "species": [
@@ -70,7 +70,7 @@
     "nameVi": "Bến sông làng",
     "kind": "river",
     "minLevel": 2,
-    "saleFactor": 0.7,
+    "saleFactor": 0.85,
     "theme": "river",
     "summary": "Khúc sông hiền chảy qua làng, bờ tre, bãi cỏ trâu ra uống nước. Không mất vé, câu bao lâu tuỳ thích; cá bán cho lái cá ở chợ giá thấp hơn hồ dịch vụ. Lăng, ngạnh ăn về đêm.",
     "bottomDepthCm": 240,
@@ -123,7 +123,7 @@
     "nameVi": "Hồ núi Mây",
     "kind": "mountain_lake",
     "minLevel": 4,
-    "saleFactor": 0.7,
+    "saleFactor": 0.4,
     "theme": "mountain",
     "summary": "Hồ chứa giữa thung núi, nước sâu và trong, sáng sớm sương phủ. Cá ít nhưng to: trắm đen, mè, chép lớn. Không mất vé.",
     "bottomDepthCm": 420,

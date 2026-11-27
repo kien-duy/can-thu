@@ -1,4 +1,5 @@
-import { actionFor } from '../game/hints'
+import { useState } from 'react'
+import { actionFor, announceFor } from '../game/hints'
 import { chumLevel, levelOf } from '../game/player'
 import { kg, useGame } from '../game/store'
 import { chargePower } from '../sim/game'
@@ -50,15 +51,18 @@ export function ActionBar() {
   const hasBait = useGame((s) => !!s.player.bowl && s.player.bowl.uses > 0)
   const sounded = useGame((s) => s.player.depthCm[s.cfg.location.id] !== undefined)
   const bowl = useGame((s) => s.player.bowl)
+  const fightStyle = useGame((s) => s.prefs.fightStyle)
   const chum = useGame((s) => chumLevel(s.player, s.cfg.location.id, Math.floor(s.now / 5000) * 5000))
   const canChum = game.phase === 'ready' || game.phase === 'result'
-  const a = actionFor(game, now, { hasBait, sounded })
+  const a = actionFor(game, now, { hasBait, sounded, fightStyle })
   const power = game.phase === 'charging' && game.chargeStartedAt ? chargePower(game.chargeStartedAt, now) : 0
   return (
-    <section className="action" aria-live="polite">
+    <section className="action">
+      {/* lời gợi ý đổi liên tục trong trận kéo nên không đặt trong vùng aria-live; trình đọc màn hình nghe Announcer */}
       <p className={`action__hint${a.urgent ? ' is-urgent' : ''}`} data-testid="hint">
         {a.hint}
       </p>
+      <Announcer />
       {(game.phase === 'fighting' || game.phase === 'landable') && game.fight && <FightBars />}
       <button
         type="button"
@@ -81,7 +85,8 @@ export function ActionBar() {
       </button>
       <div className="action__secondary">
         <span className="muted small">
-          {bowl ? `Mồi: ${bowl.label}, còn ${bowl.uses} lần móc` : 'Hết mồi'} · Ổ: {chum < 0.05 ? 'chưa có' : `${Math.round(chum * 100)}%`} · Space · Dòng: A/D · Vớt: E
+          {bowl ? `Mồi: ${bowl.label}, còn ${bowl.uses} lần móc` : 'Hết mồi'} · Ổ: {chum < 0.05 ? 'chưa có' : `${Math.round(chum * 100)}%`} ·{' '}
+          <span data-testid="controls-hint">{CONTROLS_HINT[fightStyle]}</span>
         </span>
         {canChum && (
           <button type="button" className="ghost ghost--small" data-testid="chum" onClick={() => useGame.getState().throwChum()} title="Ném một nắm mồi xả (tốn 3 lần móc) để gom cá về ổ">
@@ -92,6 +97,29 @@ export function ActionBar() {
     </section>
   )
 }
+
+/** Vùng đọc ẩn: chỉ nhận lời khi có chuyện (đổi hướng cá, cá đuối, dây sắp đứt, kết quả), xem announceFor. */
+function Announcer() {
+  const game = useGame((s) => s.game)
+  const now = useGame((s) => s.now)
+  const hasBait = useGame((s) => !!s.player.bowl && s.player.bowl.uses > 0)
+  const sounded = useGame((s) => s.player.depthCm[s.cfg.location.id] !== undefined)
+  const fightStyle = useGame((s) => s.prefs.fightStyle)
+  const [said, setSaid] = useState('')
+  const next = announceFor(game, now, { hasBait, sounded, fightStyle }, said)
+  if (next !== said) setSaid(next) // nhớ lời vừa đọc (cập nhật trong lúc vẽ, không cần effect)
+  return (
+    <p className="sr-only" aria-live="polite" data-testid="announce">
+      {next}
+    </p>
+  )
+}
+
+/** Gợi ý điều khiển theo kiểu kéo cá đang chọn (Cài đặt). Phím vẫn dùng được ở cả hai kiểu. */
+const CONTROLS_HINT = {
+  keys: 'Space · Dòng: A/D · Vớt: E',
+  drag: 'Kéo cá: giữ chuột hoặc ngón tay để ghì, rê ngang để dòng · phím vẫn dùng được',
+} as const
 
 function FightBars() {
   const f = useGame((s) => s.game.fight)!

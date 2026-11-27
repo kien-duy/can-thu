@@ -12,7 +12,7 @@
         "loose": 0.2
       },
       "packScoops": 10,
-      "packXu": 20
+      "packXu": 10
     },
     {
       "id": "bot_tom",
@@ -25,7 +25,7 @@
         "loose": 0.3
       },
       "packScoops": 6,
-      "packXu": 40
+      "packXu": 20
     },
     {
       "id": "bot_sua_ngo",
@@ -38,7 +38,7 @@
         "loose": 0.3
       },
       "packScoops": 6,
-      "packXu": 35
+      "packXu": 18
     },
     {
       "id": "cam_rang",
@@ -51,7 +51,7 @@
         "loose": 0.8
       },
       "packScoops": 10,
-      "packXu": 15
+      "packXu": 8
     },
     {
       "id": "ngo_u_chua",
@@ -64,7 +64,7 @@
         "loose": 0.2
       },
       "packScoops": 6,
-      "packXu": 30
+      "packXu": 15
     },
     {
       "id": "tinh_chua",
@@ -77,7 +77,7 @@
         "loose": 0
       },
       "packScoops": 4,
-      "packXu": 30
+      "packXu": 15
     },
     {
       "id": "bot_ra",
@@ -90,7 +90,7 @@
         "loose": 1
       },
       "packScoops": 6,
-      "packXu": 25
+      "packXu": 13
     },
     {
       "id": "bot_keo",
@@ -103,7 +103,7 @@
         "loose": -1
       },
       "packScoops": 4,
-      "packXu": 25
+      "packXu": 13
     },
     {
       "id": "giun_dat",
@@ -116,7 +116,7 @@
         "loose": -0.6
       },
       "packScoops": 6,
-      "packXu": 45
+      "packXu": 23
     },
     {
       "id": "oc_xay",
@@ -129,7 +129,7 @@
         "loose": -0.4
       },
       "packScoops": 4,
-      "packXu": 60
+      "packXu": 30
     }
   ],
   "recipes": [

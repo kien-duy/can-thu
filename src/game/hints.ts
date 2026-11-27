@@ -1,9 +1,13 @@
 import { speciesOf } from '../content'
+import { LANDABLE_STAMINA } from '../sim/fight'
 import { type GameState, waitStatus } from '../sim/game'
+import type { FightStyle } from './prefs'
 
 export interface HintContext {
   hasBait: boolean
   sounded: boolean
+  /** kiểu kéo cá đang chọn trong Cài đặt (mặc định: phím) */
+  fightStyle?: FightStyle
 }
 
 /** Nút hành động chính và dòng gợi ý theo tình huống (giọng văn: thong thả, rành nghề, gần gũi). */
@@ -35,7 +39,7 @@ export function actionFor(s: GameState, t: number, ctx: HintContext = { hasBait:
     case 'fighting':
       return {
         label: s.reeling ? 'Đang ghì' : 'Giữ để ghì',
-        hint: fightHint(s),
+        hint: fightHint(s, ctx.fightStyle ?? 'keys'),
         mode: 'hold',
         urgent: (s.fight?.tension ?? 0) > 0.8,
       }
@@ -46,12 +50,33 @@ export function actionFor(s: GameState, t: number, ctx: HintContext = { hasBait:
   }
 }
 
-function fightHint(s: GameState): string {
+export const ANNOUNCE_TIGHT = 'Dây căng quá, thả tay ra!'
+const ANNOUNCE_DIR = { [-1]: 'Cá chạy sang trái, dòng cần sang phải.', 0: 'Cá ghì thẳng.', 1: 'Cá chạy sang phải, dòng cần sang trái.' } as const
+
+/**
+ * Lời đọc cho trình đọc màn hình (vùng aria-live riêng). Lời gợi ý trên màn hình đổi liên tục trong trận kéo;
+ * lời đọc chỉ đổi khi có chuyện: cá đổi hướng, cá đuối, dây sắp đứt, có kết quả. Ngoài trận kéo thì đọc đúng
+ * lời gợi ý (vốn chỉ đổi theo pha). `prev` là lời vừa đọc: dây căng thì giữ lời cảnh báo tới khi căng dưới 0.6,
+ * để độ căng lượn quanh ngưỡng không làm đọc đi đọc lại.
+ */
+export function announceFor(s: GameState, t: number, ctx: HintContext | undefined, prev: string): string {
+  if (s.phase !== 'fighting') return actionFor(s, t, ctx).hint
   const f = s.fight
+  if (!f) return prev
+  if (f.tension > 0.8 || (prev === ANNOUNCE_TIGHT && f.tension > 0.6)) return ANNOUNCE_TIGHT
+  if (f.stamina <= LANDABLE_STAMINA) return 'Cá đuối rồi, thu dây vào bờ.'
+  return ANNOUNCE_DIR[f.fishDir]
+}
+
+function fightHint(s: GameState, style: FightStyle): string {
+  const f = s.fight
+  const drag = style === 'drag'
   if ((f?.tension ?? 0) > 0.8) return 'Dây căng quá, thả tay ra!'
-  if (f?.fishDir === -1) return f.rodSide === 1 ? 'Cá chạy trái, cần đang dòng phải. Đúng bài, cá sẽ đuối nhanh.' : 'Cá chạy sang trái. Dòng cần ngược hướng cá chạy: giữ D hoặc ▶.'
-  if (f?.fishDir === 1) return f.rodSide === -1 ? 'Cá chạy phải, cần đang dòng trái. Đúng bài, cá sẽ đuối nhanh.' : 'Cá chạy sang phải. Dòng cần ngược hướng cá chạy: giữ A hoặc ◀.'
-  return 'Giữ để thu dây, thả khi dây căng đỏ. Cá chạy ngang thì dòng cần ngược hướng cá chạy.'
+  if (f?.fishDir === -1) return f.rodSide === 1 ? 'Cá chạy trái, cần đang dòng phải. Đúng bài, cá sẽ đuối nhanh.' : `Cá chạy sang trái. Dòng cần ngược hướng cá chạy: ${drag ? 'rê sang phải' : 'giữ D hoặc ▶'}.`
+  if (f?.fishDir === 1) return f.rodSide === -1 ? 'Cá chạy phải, cần đang dòng trái. Đúng bài, cá sẽ đuối nhanh.' : `Cá chạy sang phải. Dòng cần ngược hướng cá chạy: ${drag ? 'rê sang trái' : 'giữ A hoặc ◀'}.`
+  return drag
+    ? 'Giữ chuột hoặc ngón tay để thu dây, nhấc lên khi dây căng đỏ. Cá chạy ngang thì rê ngược hướng cá chạy.'
+    : 'Giữ để thu dây, thả khi dây căng đỏ. Cá chạy ngang thì dòng cần ngược hướng cá chạy.'
 }
 
 function resultText(s: GameState): string {

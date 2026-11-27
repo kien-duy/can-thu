@@ -23,6 +23,8 @@ export const PlayerStateSchema = z.object({
   stock: z.record(z.string(), z.number().int().nonnegative()),
   bowl: z.object({ axes: AxesZ, uses: z.number().int().nonnegative(), label: z.string() }).nullable(),
   notifyAsked: z.boolean(),
+  /** đã gợi ý mua lưỡi to sau lần tuột lưỡi đầu tiên (bản lưu cũ chưa có thì coi như chưa) */
+  hookTipShown: z.boolean().default(false),
   /** ổ mồi xả theo địa điểm: độ đậm lúc xả gần nhất và thời điểm đó (ms) */
   chum: z.record(z.string(), z.object({ level: z.number(), at: z.number() })),
   quests: z.object({ date: z.string(), progress: z.record(z.string(), z.number()), claimed: z.array(z.string()) }),
@@ -46,6 +48,7 @@ export function newPlayer(): PlayerState {
     // chậu mồi rô phi trộn sẵn: người mới vào là câu được ngay
     bowl: { axes: mixAxes(first.scoops), uses: BAIT.usesPerBowl, label: first.nameVi },
     notifyAsked: false,
+    hookTipShown: false,
     chum: {},
     quests: { date: '', progress: {}, claimed: [] },
   }
@@ -106,6 +109,29 @@ export function buyGear(p: PlayerState, kind: Kind, id: string): Op {
     owned: { ...p.owned, [kind]: [...p.owned[kind], id] },
     equipped: { ...p.equipped, [slot[kind]]: id },
   })
+}
+
+/**
+ * Gợi ý một lần sau lần tuột lưỡi đầu tiên: lưỡi to kế tiếp so với lưỡi đang buộc, kèm giá.
+ * Trả về null nếu đã gợi ý rồi hoặc đang buộc lưỡi to nhất.
+ */
+export function unhookTip(p: PlayerState): string | null {
+  if (p.hookTipShown) return null
+  const now = hookOf(p.equipped.hook)
+  const next = [...GEAR.hooks].sort((a, b) => a.bestForG[1] - b.bestForG[1]).find((h) => h.bestForG[1] > now.bestForG[1])
+  if (!next) return null
+  const kgMax = (now.bestForG[1] / 1000).toLocaleString('vi-VN')
+  const head = `${now.nameVi} chỉ giữ chắc cá tới ${kgMax} kg.`
+  if (p.owned.hooks.includes(next.id)) return `${head} Bạn có ${next.nameVi.toLowerCase()} rồi: buộc vào ở Chuẩn bị → Đồ nghề.`
+  const lock = levelOf(p.xp) < next.minLevel ? `, mở ở cấp ${next.minLevel}` : ''
+  return `${head} Mua ${next.nameVi.toLowerCase()} ở Cửa hàng (${next.priceXu} xu${lock}) để giữ cá to.`
+}
+
+/** Rủi ro của một món chưa mua so với bộ đang lắp: dây khoẻ hơn cần thì quá tải cần gãy trước thẻo. */
+export function shopRisk(p: PlayerState, kind: Kind, id: string): string | null {
+  if (kind === 'lines' && lineOf(id).strength > rodOf(p.equipped.rod).strength) return `Khoẻ hơn ${rodOf(p.equipped.rod).nameVi.toLowerCase()} đang lắp: quá tải thì cần gãy trước thẻo.`
+  if (kind === 'rods' && rodOf(id).strength < lineOf(p.equipped.line).strength) return 'Yếu hơn dây đang lắp: quá tải thì cần gãy trước thẻo.'
+  return null
 }
 
 export function equip(p: PlayerState, kind: Kind, id: string): Op {

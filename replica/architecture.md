@@ -4,6 +4,8 @@
 
 Date: 2026-11-26. Nguồn: `recon.md`, `features.csv`, `brand.md`, cùng các quyết định đã chốt qua 4 vòng hỏi.
 
+Kinh tế (giá cá, vé, mồi, thu nhập theo giờ, mục tiêu nâng cấp): xem [`economy.md`](economy.md).
+
 ## Nguyên tắc
 
 1. **Game chạy ở client, server chỉ lưu.** Toàn bộ mô phỏng (phao, cá, kéo cá) là TypeScript thuần chạy trong trình duyệt. Server lưu nhật ký câu, tiến độ và chặn vài kiểu gian lận thô.

@@ -69,6 +69,15 @@ describe('phiên và tài khoản', () => {
     expect((await b.req('GET', '/player')).json).toMatchObject({ version: 0, coins: 500 })
   })
 
+  it('cookie chỉ có cờ Secure khi request là HTTPS (WebKit bỏ cookie Secure trên http://localhost)', async () => {
+    const app = createApp({ db: async () => db })
+    const post = (url: string, headers: Record<string, string> = {}) =>
+      app.request(url, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: '{}' })
+    expect((await post('http://localhost/api/session')).headers.get('set-cookie')).not.toMatch(/Secure/)
+    expect((await post('https://cau.vn/api/session')).headers.get('set-cookie')).toMatch(/Secure/)
+    expect((await post('http://10.0.0.5/api/session', { 'x-forwarded-proto': 'https' })).headers.get('set-cookie')).toMatch(/Secure/)
+  })
+
   it('chưa có phiên thì không đọc được gì', async () => {
     expect((await browser().req('GET', '/handbook')).status).toBe(401)
   })

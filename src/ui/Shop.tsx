@@ -38,18 +38,25 @@ export function Shop() {
               {g.items.map((i) => {
                 const owned = player.owned[g.kind].includes(i.id)
                 const locked = P.levelOf(player.xp) < i.minLevel
+                const risk = owned ? null : P.shopRisk(player, g.kind, i.id)
+                const riskId = `shop-risk-${i.id}`
                 return (
                   <li key={i.id} className="shop-item">
                     <div>
                       <strong>{i.nameVi}</strong>
                       <div className="muted small">{i.note}</div>
+                      {risk && (
+                        <div className="warn small" role="note" id={riskId} data-testid={riskId}>
+                          {risk}
+                        </div>
+                      )}
                     </div>
                     {owned ? (
                       <span className="muted">Đã có</span>
                     ) : locked ? (
                       <span className="muted">Cấp {i.minLevel}</span>
                     ) : (
-                      <button type="button" className="primary" disabled={player.coins < i.priceXu} onClick={() => buy((p) => P.buyGear(p, g.kind, i.id), i.nameVi)}>
+                      <button type="button" className="primary" disabled={player.coins < i.priceXu} aria-describedby={risk ? riskId : undefined} onClick={() => buy((p) => P.buyGear(p, g.kind, i.id), i.nameVi)}>
                         {xu(i.priceXu)}
                       </button>
                     )}

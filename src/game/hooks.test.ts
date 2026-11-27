@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { LOCATIONS } from '../content'
-import { buyGear, equip, newPlayer, parsePlayer, setupFor } from './player'
+import { buyGear, equip, newPlayer, parsePlayer, PlayerStateSchema, setupFor, shopRisk, unhookTip } from './player'
 
 const loc = LOCATIONS[0]!
 
@@ -47,5 +47,47 @@ describe('lưỡi câu trong túi đồ', () => {
     if (!r.ok) throw new Error(r.error)
     const back = equip(r.state, 'hooks', 'luoi_3')
     expect(back.ok && back.state.equipped.hook).toBe('luoi_3')
+  })
+})
+
+describe('gợi ý sau lần tuột lưỡi đầu tiên', () => {
+  it('người mới cấp 1: gợi ý lưỡi số 5 kèm giá và cấp mở', () => {
+    expect(unhookTip(newPlayer())).toBe('Lưỡi số 3 chỉ giữ chắc cá tới 2 kg. Mua lưỡi số 5 ở Cửa hàng (150 xu, mở ở cấp 2) để giữ cá to.')
+  })
+  it('đã đủ cấp thì không nhắc cấp; đã có lưỡi số 5 thì nhắc buộc vào', () => {
+    const p = { ...newPlayer(), xp: 60 }
+    expect(unhookTip(p)).toBe('Lưỡi số 3 chỉ giữ chắc cá tới 2 kg. Mua lưỡi số 5 ở Cửa hàng (150 xu) để giữ cá to.')
+    const owns = { ...p, owned: { ...p.owned, hooks: ['luoi_3', 'luoi_5'] } }
+    expect(unhookTip(owns)).toContain('Bạn có lưỡi số 5 rồi')
+  })
+  it('chỉ một lần: đã hiện thì thôi; đang buộc lưỡi to nhất thì không gợi ý', () => {
+    expect(unhookTip({ ...newPlayer(), hookTipShown: true })).toBeNull()
+    const big = newPlayer()
+    expect(unhookTip({ ...big, equipped: { ...big.equipped, hook: 'luoi_8' } })).toBeNull()
+  })
+  it('bản lưu cũ chưa có cờ này vẫn đọc được, coi như chưa gợi ý', () => {
+    const old: Partial<ReturnType<typeof newPlayer>> = newPlayer()
+    delete old.hookTipShown
+    expect(PlayerStateSchema.parse(old).hookTipShown).toBe(false)
+    expect(parsePlayer({ ...old, coins: 777 })).toMatchObject({ coins: 777, hookTipShown: false })
+    expect(parsePlayer({ ...newPlayer(), hookTipShown: true }).hookTipShown).toBe(true)
+  })
+})
+
+describe('cửa hàng cảnh báo dây khoẻ hơn cần', () => {
+  it('cần tre + dây 1.0: dây 1.5 và 2.5 bị cảnh báo, dây 1.0 thì không', () => {
+    const p = newPlayer()
+    expect(shopRisk(p, 'lines', 'day_15')).toBe('Khoẻ hơn cần tre 3m6 đang lắp: quá tải thì cần gãy trước thẻo.')
+    expect(shopRisk(p, 'lines', 'day_25')).not.toBeNull()
+    expect(shopRisk(p, 'lines', 'day_10')).toBeNull()
+    expect(shopRisk(p, 'rods', 'can_carbon_45')).toBeNull()
+    expect(shopRisk(p, 'hooks', 'luoi_5')).toBeNull()
+  })
+  it('đang lắp dây 2.5: cần yếu hơn dây bị cảnh báo; cần cứng thì không', () => {
+    const p = newPlayer()
+    const q = { ...p, owned: { ...p.owned, lines: ['day_10', 'day_25'] }, equipped: { ...p.equipped, line: 'day_25', rod: 'can_cung_54' } }
+    expect(shopRisk(q, 'rods', 'can_carbon_45')).toBe('Yếu hơn dây đang lắp: quá tải thì cần gãy trước thẻo.')
+    expect(shopRisk(q, 'rods', 'can_cung_54')).toBeNull()
+    expect(shopRisk(q, 'lines', 'day_15')).toBeNull()
   })
 })

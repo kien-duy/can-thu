@@ -17,6 +17,7 @@ import { nextVisit, type Visit } from '../sim/wildlife'
 import { localHour, weatherFor } from '../sim/world'
 import { advanceQuests, dailyQuests, type Quest, type QuestEvent } from './quests'
 import * as P from './player'
+import { parsePrefs, type Prefs } from './prefs'
 
 const params = new URLSearchParams(location.search)
 /** `?fast=1`: thu nhỏ thời gian (để test, để thử nhanh): 1 "giờ" vé = 60 giây. `?seed=n`: lượt câu tái hiện được. */
@@ -26,18 +27,7 @@ const HOUR_MS = FAST ? 60_000 : 3_600_000
 
 export type ViewMode = '3d' | 'office'
 export type Panel = 'handbook' | 'tray' | 'shop' | 'account' | 'quests' | 'settings' | null
-export type Quality = 'low' | 'medium' | 'high'
-
-export interface Prefs {
-  quality: Quality
-  floatSize: 's' | 'm' | 'l'
-  sound: boolean
-  /** góc rộng: camera lùi xa nhìn toàn cảnh hồ */
-  wide: boolean
-  xray: boolean
-}
-
-const DEFAULT_PREFS: Prefs = { quality: 'medium', floatSize: 'm', sound: true, wide: false, xray: false }
+export type { FightStyle, Prefs, Quality } from './prefs'
 
 export interface Toast {
   id: number
@@ -119,7 +109,7 @@ export const useGame: UseBoundStore<StoreApi<Store>> = create<Store>((set, get) 
   notifyPrompt: false,
   toasts: [],
   alerts: new Alerts(() => useGame.getState().cfg.location.nameVi),
-  prefs: { ...DEFAULT_PREFS, ...readJson<Partial<Prefs>>('can-thu:prefs') },
+  prefs: parsePrefs(readJson<unknown>('can-thu:prefs')),
   sightings: [],
   visits: 0,
 
@@ -502,6 +492,14 @@ function onTransition(prev: GameState, next: GameState) {
     const broken = rodOf(next.result.rodId ?? st.player.equipped.rod)
     st.apply((p) => P.breakRod(p, broken.id))
     st.toast(`Rắc! Gãy cần ${broken.nameVi}. Đã lắp lại ${rodOf(useGame.getState().player.equipped.rod).nameVi}.`, 'error')
+  }
+  if (next.phase === 'result' && prev.phase !== 'result' && next.result?.kind === 'escaped' && next.result.reason === 'unhooked') {
+    // gợi ý một lần sau lần tuột lưỡi đầu tiên, nhớ vào tiến độ để không nhắc lại
+    const tip = P.unhookTip(st.player)
+    if (tip) {
+      st.apply((p) => ({ ...p, hookTipShown: true }))
+      st.toast(tip)
+    }
   }
 }
 

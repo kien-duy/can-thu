@@ -37,7 +37,7 @@
       "sour": 0.5,
       "loose": 0.4
     },
-    "priceXuPerKg": 35,
+    "priceXuPerKg": 18,
     "fight": {
       "power": 0.34,
       "stamina": 0.55,
@@ -100,7 +100,7 @@
       "sour": 0.3,
       "loose": 0.4
     },
-    "priceXuPerKg": 50,
+    "priceXuPerKg": 25,
     "fight": {
       "power": 0.4,
       "stamina": 0.6,
@@ -164,7 +164,7 @@
       "sour": 0.2,
       "loose": 0.3
     },
-    "priceXuPerKg": 60,
+    "priceXuPerKg": 30,
     "fight": {
       "power": 0.62,
       "stamina": 0.85,
@@ -226,7 +226,7 @@
       "sour": 0.1,
       "loose": 0.5
     },
-    "priceXuPerKg": 120,
+    "priceXuPerKg": 60,
     "fight": {
       "power": 0.2,
       "stamina": 0.4,
@@ -288,7 +288,7 @@
       "sour": 0.8,
       "loose": 0.3
     },
-    "priceXuPerKg": 55,
+    "priceXuPerKg": 28,
     "fight": {
       "power": 0.7,
       "stamina": 0.9,
@@ -350,7 +350,7 @@
       "sour": 0.8,
       "loose": 0.9
     },
-    "priceXuPerKg": 30,
+    "priceXuPerKg": 15,
     "fight": {
       "power": 0.55,
       "stamina": 0.8,
@@ -412,7 +412,7 @@
       "sour": 0.9,
       "loose": 0.6
     },
-    "priceXuPerKg": 30,
+    "priceXuPerKg": 15,
     "fight": {
       "power": 0.35,
       "stamina": 0.55,
@@ -474,7 +474,7 @@
       "sour": 0.2,
       "loose": 0.3
     },
-    "priceXuPerKg": 45,
+    "priceXuPerKg": 23,
     "fight": {
       "power": 0.55,
       "stamina": 0.65,
@@ -538,7 +538,7 @@
       "sour": 0.2,
       "loose": 0.8
     },
-    "priceXuPerKg": 40,
+    "priceXuPerKg": 20,
     "fight": {
       "power": 0.1,
       "stamina": 0.3,
@@ -600,7 +600,7 @@
       "sour": 0.2,
       "loose": 0.2
     },
-    "priceXuPerKg": 140,
+    "priceXuPerKg": 70,
     "fight": {
       "power": 0.22,
       "stamina": 0.5,
@@ -662,7 +662,7 @@
       "sour": 0.3,
       "loose": 0.5
     },
-    "priceXuPerKg": 70,
+    "priceXuPerKg": 35,
     "fight": {
       "power": 0.4,
       "stamina": 0.6,
@@ -726,7 +726,7 @@
       "sour": 0.1,
       "loose": 0.2
     },
-    "priceXuPerKg": 160,
+    "priceXuPerKg": 80,
     "fight": {
       "power": 0.45,
       "stamina": 0.6,
@@ -792,7 +792,7 @@
       "sour": 0.0,
       "loose": 0.1
     },
-    "priceXuPerKg": 180,
+    "priceXuPerKg": 90,
     "fight": {
       "power": 0.75,
       "stamina": 0.9,
@@ -854,7 +854,7 @@
       "sour": 0.1,
       "loose": 0.1
     },
-    "priceXuPerKg": 90,
+    "priceXuPerKg": 45,
     "fight": {
       "power": 0.85,
       "stamina": 1.0,
@@ -917,7 +917,7 @@
       "sour": 0.9,
       "loose": 1.0
     },
-    "priceXuPerKg": 25,
+    "priceXuPerKg": 13,
     "fight": {
       "power": 0.5,
       "stamina": 0.7,

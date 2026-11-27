@@ -129,10 +129,18 @@ function step(f: FightState, reeling: boolean): FightState {
   return { ...f, rng, surgeUntil, nextSurgeAt, elapsedMs, pull, tension, distanceM, stamina, overloadMs, fishDir, dirRng }
 }
 
-/** Cơ hội tuột lưỡi mỗi lần cá vùng chạy: 0 khi lưỡi vừa; cá nặng gấp đôi sức lưỡi thì 1/4, trần 1/2. */
+/** Mỗi lần cá vùng chạy, cá vượt sức lưỡi bao nhiêu lần thì thêm ngần này cơ hội tuột (có trần). */
+export const UNHOOK_PER_OVER = 0.08
+export const UNHOOK_MAX = 0.3
+
+/**
+ * Cơ hội tuột lưỡi mỗi lần cá vùng chạy: 0 khi lưỡi vừa; cá nặng gấp đôi sức lưỡi thì 8 %, trần 30 %.
+ * Đo với lưỡi số 3 ở Hồ Đồng Xanh, người kéo đúng bài: cá trên 2 kg tuột chừng 1 con trong 5
+ * (cá 2–3 kg 5 %, 3–4 kg 17 %, 4–6 kg gần nửa); lưỡi số 5 giữ trọn cá tới 6 kg.
+ */
 export function unhookChance(weightG: number, hookMaxG?: number): number {
   if (hookMaxG === undefined || weightG <= hookMaxG) return 0
-  return Math.min(0.5, 0.25 * (weightG / hookMaxG - 1))
+  return Math.min(UNHOOK_MAX, UNHOOK_PER_OVER * (weightG / hookMaxG - 1))
 }
 
 /** Vừa bắt đầu một nhịp vùng chạy thì gieo xem lưỡi có giữ nổi không (chỉ gieo khi lưỡi nhỏ so với cá). */

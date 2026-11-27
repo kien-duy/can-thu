@@ -5,7 +5,7 @@ const coins = async (page: import('@playwright/test').Page) => Number((await pag
 test('một ca trọn vẹn: vé, dò đáy, trộn mồi, câu, hết ca, bán cá', async ({ page }) => {
   test.setTimeout(120_000)
   await enterShift(page)
-  expect(await coins(page)).toBe(440) // 500 − vé 1 tiếng 60
+  expect(await coins(page)).toBe(470) // 500 − vé 1 tiếng 30
 
   // chuẩn bị: dò đáy, trộn bài mồi rô phi
   await page.getByTestId('open-tray').click()
@@ -32,7 +32,7 @@ test('một ca trọn vẹn: vé, dò đáy, trộn mồi, câu, hết ca, bán 
   await expect(app(page)).toHaveAttribute('data-shift', 'none')
   await expect(page.getByText(/Cân cá xong: 1 con/)).toBeVisible()
   const after = Number((await page.getByTestId('coins').textContent())!.replace(/\D/g, ''))
-  expect(after).toBeGreaterThan(440)
+  expect(after).toBeGreaterThan(470)
 
   // tiến độ còn sau khi tải lại
   await page.reload()
@@ -44,7 +44,7 @@ test('cửa hàng: mua dây 1.5, đủ xu thì trừ, có trong khay đồ ngh�
   await page.getByTestId('open-shop').click()
   await expect(page.getByText('Cấp 2').first()).toBeVisible() // cần carbon, phao cỏ lau cần cấp 2
   await page.getByRole('button', { name: '250 xu' }).click()
-  await expect(page.getByTestId('shop-coins')).toHaveText('190 xu')
+  await expect(page.getByTestId('shop-coins')).toHaveText('220 xu') // 500 − vé 30 − dây 250
   await page.getByRole('button', { name: 'Đóng cửa hàng' }).click()
   await page.getByTestId('open-tray').click()
   await page.getByRole('tab', { name: 'Đồ nghề' }).click()

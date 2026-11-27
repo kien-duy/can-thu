@@ -42,6 +42,14 @@ export function SettingsPanel() {
           ]}
         />
         <Choice
+          label="Kiểu kéo cá"
+          k="fightStyle"
+          options={[
+            { v: 'keys', label: 'Nút và phím', note: 'Giữ nút hoặc Space để ghì, A/D để dòng' },
+            { v: 'drag', label: 'Rê chuột, ngón tay', note: 'Giữ để ghì, rê ngang để dòng cần' },
+          ]}
+        />
+        <Choice
           label="Âm thanh báo"
           k="sound"
           options={[

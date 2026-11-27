@@ -8,6 +8,9 @@ import { Sky, Stars } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
+import { Line2 } from 'three/examples/jsm/lines/Line2.js'
+import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { type Creature, CREATURES } from '../content'
 import { floatPose } from '../game/pose'
 import { type Quality, useGame } from '../game/store'
@@ -16,7 +19,6 @@ import { createRng, type Rng } from '../sim/rng'
 import { localHour } from '../sim/world'
 
 const SEG = 0.06 // m mỗi nấc, phóng to so với thật để nhìn rõ từ bờ
-const ROD_TIP = new THREE.Vector3(0.35, 2.3, -2.8)
 type Theme = 'fee_pond' | 'river' | 'mountain'
 
 const THEME = {
@@ -271,61 +273,195 @@ function Float() {
   )
 }
 
+/** Cần tay 3 khúc, gốc ở tay người ngồi câu (xoay quanh gốc, không quanh giữa cần). */
+const ROD_BUTT = new THREE.Vector3(0.35, 0.05, 1.95)
+const ROD_PITCH = -1.05 // nghiêng về phía hồ
+const ROD_PIECE = 1.2 // m mỗi khúc, 3 khúc = cần 3m6
+const ROD_RADII = [0.022, 0.016, 0.011, 0.006] // gốc → ngọn
+/** dòng cần sang một bên: góc xoay quanh gốc (rad) */
+const ROD_STEER_TILT = 0.32
+/**
+ * Khúc ngọn gãy rũ xuống theo dây, chúi về phía hồ (góc tuyệt đối so với phương thẳng đứng) và lệch sang phải:
+ * từ chỗ ngồi, rũ thẳng hay lệch trái thì khúc ngọn nằm chồng lên khúc gốc trên màn hình, không ai thấy gãy.
+ */
+const BROKEN_TIP_HANG = -2.2
+const BROKEN_TIP_SWING = -0.6
+const LINE_POINTS = 16
+const LINE_COLOUR = '#ffd54a' // dây màu huỳnh quang: nổi trên cả trời sáng lẫn nước xanh
+
+function RodPiece({ i }: { i: number }) {
+  return (
+    <mesh position={[0, ROD_PIECE / 2, 0]}>
+      <cylinderGeometry args={[ROD_RADII[i + 1] ?? 0.006, ROD_RADII[i] ?? 0.02, ROD_PIECE, 6]} />
+      <meshStandardMaterial color={i === 2 ? '#4a3826' : '#5b4630'} />
+    </mesh>
+  )
+}
+
+/** dằm tre sáng màu ở vết gãy (cả khúc gốc lẫn khúc ngọn) */
+function Splinters() {
+  return (
+    <>
+      {[-0.006, 0.005, 0].map((dx, i) => (
+        <mesh key={i} position={[dx, 0.03 + i * 0.01, dx * 0.5]} rotation={[0, 0, dx * 20]}>
+          <coneGeometry args={[0.008, 0.07 + i * 0.03, 4]} />
+          <meshStandardMaterial color="#e8d3a2" flatShading />
+        </mesh>
+      ))}
+    </>
+  )
+}
+
 function RodAndLine() {
   const line = useMemo(() => {
-    const geo = new THREE.BufferGeometry().setFromPoints([ROD_TIP, new THREE.Vector3()])
-    return new THREE.Line(geo, new THREE.LineBasicMaterial({ color: '#f4f4f4', transparent: true, opacity: 0.7 }))
+    const geo = new LineGeometry()
+    geo.setPositions(new Array(LINE_POINTS * 3).fill(0))
+    const l = new Line2(geo, new LineMaterial({ color: LINE_COLOUR, linewidth: 2, transparent: true, opacity: 0.9 }))
+    l.frustumCulled = false // điểm dây đổi mỗi khung hình, khối bao không cập nhật
+    return l
   }, [])
-  const rod = useRef<THREE.Mesh>(null)
+  const root = useRef<THREE.Group>(null)
+  const piece0 = useRef<THREE.Group>(null)
+  const piece1 = useRef<THREE.Group>(null)
+  const piece2 = useRef<THREE.Group>(null)
+  const tipAnchor = useRef<THREE.Object3D>(null)
+  const splinter = useRef<THREE.Group>(null)
+  const tipSplinter = useRef<THREE.Group>(null)
+  const wake = useRef<THREE.Group>(null)
+  const wakeRing = useRef<THREE.Mesh>(null)
   // vị trí ngang của đầu dây và độ nghiêng cần, trượt dần về đích cho mượt
   const lineX = useRef(0)
   const rodTilt = useRef(0)
-  const tip = useRef<THREE.Mesh>(null)
+  const brokenFold = useRef(0)
+  /** chỗ cá lúc cuối trận: cần gãy thì dây chùng từ khúc ngọn rũ về đó */
+  const lastFish = useRef(new THREE.Vector3(0.2, 0, -7))
+  const tmp = useMemo(() => ({ start: new THREE.Vector3(), p: new THREE.Vector3() }), [])
   useFrame(({ clock }, delta) => {
     const { game, now } = useGame.getState()
-    const pos = line.geometry.attributes.position as THREE.BufferAttribute
-    line.visible = game.phase !== 'ready' && game.phase !== 'charging' && !(game.phase === 'result' && game.result?.kind !== 'landed')
+    const fighting = (game.phase === 'fighting' || game.phase === 'landable') && !!game.fight
+    const broken = game.phase === 'result' && game.result?.kind === 'rod_broke'
+    const tension = fighting ? Math.min(1.2, game.fight?.tension ?? 0) : 0
+    const k = Math.min(1, delta * 6)
+
+    // ---- cần: nhấc theo độ căng, cong dần về phía cá, xoay quanh gốc khi dòng
+    let sideBend = 0
     let end: THREE.Vector3
-    if ((game.phase === 'fighting' || game.phase === 'landable') && game.fight) {
+    if (fighting && game.fight) {
       const f = game.fight
       // cá chạy về phía nào thì đầu dây kéo về phía đó; ghì thẳng thì chỉ đung đưa nhẹ
       const reach = Math.min(1, f.distanceM / 6)
-      const goal = f.fishDir * 2.2 * reach + Math.sin(clock.elapsedTime * 1.3) * 0.25 * reach
+      const goal = f.fishDir * 2.4 * reach + Math.sin(clock.elapsedTime * 1.3) * 0.25 * reach
       lineX.current += (goal - lineX.current) * Math.min(1, delta * 2.5)
-      end = new THREE.Vector3(lineX.current, -0.05, -f.distanceM)
+      end = tmp.p.set(lineX.current, -0.05, -f.distanceM)
+      lastFish.current.copy(end)
+      sideBend = -(lineX.current / Math.max(2, f.distanceM)) * tension * 0.4
+    } else if (broken) {
+      end = tmp.p.copy(lastFish.current)
     } else {
       const pose = floatPose(game, now)
-      end = new THREE.Vector3(0.2, (2 - pose.sink) * SEG + 0.02, -(game.cast?.distanceM ?? 7))
+      end = tmp.p.set(0.2, (2 - pose.sink) * SEG + 0.02, -(game.cast?.distanceM ?? 7))
       lineX.current = end.x
     }
-    pos.setXYZ(1, end.x, end.y, end.z)
-    pos.needsUpdate = true
-    if (rod.current) {
-      const bend = game.phase === 'fighting' || game.phase === 'landable' ? Math.min(1.2, game.fight?.tension ?? 0) * 0.35 : 0
+    const r = root.current
+    if (r) {
+      const lift = tension * 0.35
       const charge = game.phase === 'charging' && game.chargeStartedAt ? Math.min(1, (now - game.chargeStartedAt) / 1200) * 0.6 : 0
-      rod.current.rotation.x = -1.05 + bend + charge
-      const side = (game.phase === 'fighting' || game.phase === 'landable') && game.fight ? game.fight.rodSide : 0
-      rodTilt.current += (-side * 0.25 - rodTilt.current) * Math.min(1, delta * 6)
-      rod.current.rotation.z = rodTilt.current
-      // gãy cần: chỉ còn nửa dưới, nửa ngọn rũ xuống tới khi câu tiếp
-      const broken = game.phase === 'result' && game.result?.kind === 'rod_broke'
-      rod.current.position.set(0.35, 0.9, 0.4)
-      rod.current.scale.y = broken ? 0.5 : 1
-      if (broken) rod.current.translateY(-0.9)
-      if (tip.current) tip.current.visible = broken
+      r.rotation.x = ROD_PITCH + lift + charge
+      const side = fighting && game.fight ? game.fight.rodSide : 0
+      rodTilt.current += (-side * ROD_STEER_TILT - rodTilt.current) * k
+      r.rotation.z = rodTilt.current
+      // cá kéo thì ngọn cong xuống và về phía cá; khúc gốc nằm trong tay nên không cong, khúc ngọn cong nhiều nhất
+      const curve = broken ? 0 : tension * 0.14
+      ;[piece1.current, broken ? null : piece2.current].forEach((pc, i) => {
+        if (!pc) return
+        pc.rotation.x = -curve * (0.6 + i * 0.6)
+        pc.rotation.z = sideBend * (0.6 + i * 0.6)
+      })
+      // gãy cần: khúc ngọn gập ở chỗ nối, rũ xuống theo dây; vết gãy lộ lõi sáng màu
+      const top = piece2.current
+      if (top) {
+        if (broken) {
+          brokenFold.current = Math.min(1, brokenFold.current + delta * 3)
+          const above = r.rotation.x + (piece1.current?.rotation.x ?? 0)
+          const hang = BROKEN_TIP_HANG - above + Math.sin(clock.elapsedTime * 1.7) * 0.06
+          // rơi nhanh dần như bị bẻ gập
+          top.rotation.x = hang * brokenFold.current * brokenFold.current
+          top.rotation.z = BROKEN_TIP_SWING * brokenFold.current
+          // tuột khỏi chỗ gãy một chút: hai khúc không còn liền nhau
+          top.position.set(0.035 * brokenFold.current, ROD_PIECE - 0.06 * brokenFold.current, 0)
+        } else {
+          brokenFold.current = 0
+          top.position.set(0, ROD_PIECE, 0)
+        }
+      }
+      if (splinter.current) splinter.current.visible = broken
+      if (tipSplinter.current) tipSplinter.current.visible = broken
+    }
+
+    // ---- dây: từ đúng ngọn cần tới phao hoặc chỗ cá, võng khi chùng; gãy cần thì chùng hẳn từ khúc ngọn rũ
+    line.visible = game.phase !== 'ready' && game.phase !== 'charging' && (broken || !(game.phase === 'result' && game.result?.kind !== 'landed'))
+    if (line.visible && tipAnchor.current) {
+      root.current?.updateMatrixWorld(true)
+      tipAnchor.current.getWorldPosition(tmp.start)
+      const sag = broken ? 0.9 : fighting ? 0.4 * Math.max(0, 1 - tension) : 0.25
+      const arr = (line.geometry.attributes.instanceStart as THREE.InterleavedBufferAttribute).data.array as Float32Array
+      for (let i = 0; i < LINE_POINTS; i++) {
+        const u = i / (LINE_POINTS - 1)
+        const x = tmp.start.x + (end.x - tmp.start.x) * u
+        const y = tmp.start.y + (end.y - tmp.start.y) * u - sag * 4 * u * (1 - u)
+        const z = tmp.start.z + (end.z - tmp.start.z) * u
+        // LineGeometry lưu theo từng đoạn: [điểm đầu, điểm cuối] nối tiếp
+        if (i < LINE_POINTS - 1) arr.set([x, y, z], i * 6)
+        if (i > 0) arr.set([x, y, z], (i - 1) * 6 + 3)
+      }
+      ;(line.geometry.attributes.instanceStart as THREE.InterleavedBufferAttribute).data.needsUpdate = true
+    }
+
+    // ---- chỗ cá vùng vẫy: vệt bọt và vòng gợn chạy theo đầu dây
+    const w = wake.current
+    if (w) {
+      w.visible = fighting
+      if (fighting) {
+        w.position.set(end.x, 0.09, end.z)
+        const t = (clock.elapsedTime * 1.4) % 1
+        if (wakeRing.current) {
+          wakeRing.current.scale.setScalar(0.4 + t * 1.4)
+          ;(wakeRing.current.material as THREE.MeshBasicMaterial).opacity = 0.7 * (1 - t)
+        }
+      }
     }
   })
   return (
     <>
       <primitive object={line} />
-      <mesh ref={rod} position={[0.35, 0.9, 0.4]} rotation={[-1.05, 0, 0]}>
-        <cylinderGeometry args={[0.008, 0.02, 3.6, 6]} />
-        <meshStandardMaterial color="#5b4630" />
-      </mesh>
-      <mesh ref={tip} visible={false} position={[0.35, 0.12, 0.2]} rotation={[0.25, 0, 0.15]}>
-        <cylinderGeometry args={[0.008, 0.014, 1.6, 6]} />
-        <meshStandardMaterial color="#5b4630" />
-      </mesh>
+      <group ref={root} position={ROD_BUTT} rotation={[ROD_PITCH, 0, 0]}>
+        <group ref={piece0}>
+          <RodPiece i={0} />
+          <group ref={piece1} position={[0, ROD_PIECE, 0]}>
+            <RodPiece i={1} />
+            <group ref={splinter} position={[0, ROD_PIECE, 0]} visible={false}>
+              <Splinters />
+            </group>
+            <group ref={piece2} position={[0, ROD_PIECE, 0]}>
+              <RodPiece i={2} />
+              <group ref={tipSplinter} rotation={[Math.PI, 0, 0]} visible={false}>
+                <Splinters />
+              </group>
+              <object3D ref={tipAnchor} position={[0, ROD_PIECE, 0]} />
+            </group>
+          </group>
+        </group>
+      </group>
+      <group ref={wake} visible={false}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[0.3, 16]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.55} />
+        </mesh>
+        <mesh ref={wakeRing} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.38, 0.46, 28]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.6} />
+        </mesh>
+      </group>
     </>
   )
 }

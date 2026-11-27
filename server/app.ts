@@ -18,6 +18,7 @@ export interface AppOptions {
   google?: { clientId: string; clientSecret: string }
   /** Địa chỉ công khai của site, khi request đi qua proxy và không mang đúng host. */
   publicUrl?: string
+  /** Ép bật/tắt cờ Secure của cookie. Bỏ trống: bật khi request là HTTPS. */
   secureCookies?: boolean
   now?: () => number
 }
@@ -81,11 +82,16 @@ export function createApp(opts: AppOptions) {
     return fail(c, 500, 'server_error')
   })
 
+  // Cookie Secure chỉ khi trang thật sự đi qua HTTPS (trực tiếp hoặc sau proxy). Gắn Secure trên
+  // http://localhost thì WebKit trên Linux bỏ cookie, mất phiên (CI từng hỏng vì vậy).
+  const isSecure = (c: Context) =>
+    opts.secureCookies ?? (new URL(c.req.url).protocol === 'https:' || c.req.header('x-forwarded-proto')?.split(',')[0]?.trim() === 'https')
+
   const setSession = (c: Context, token: string) =>
     setCookie(c, sessionCookie(), token, {
       httpOnly: true,
       sameSite: 'Lax',
-      secure: opts.secureCookies ?? false,
+      secure: isSecure(c),
       path: '/',
       maxAge: SESSION_LIFETIME_MS / 1000,
     })
@@ -185,7 +191,7 @@ export function createApp(opts: AppOptions) {
   app.get('/auth/google', async (c) => {
     if (!opts.google) return fail(c, 404, 'google_off')
     const state = randomBytes(16).toString('base64url')
-    setCookie(c, STATE_COOKIE, state, { httpOnly: true, sameSite: 'Lax', secure: opts.secureCookies ?? false, path: '/api/auth/google', maxAge: 600 })
+    setCookie(c, STATE_COOKIE, state, { httpOnly: true, sameSite: 'Lax', secure: isSecure(c), path: '/api/auth/google', maxAge: 600 })
     const q = new URLSearchParams({
       client_id: opts.google.clientId,
       redirect_uri: callbackUrl(c),
@@ -306,6 +312,5 @@ export function optionsFromEnv(db: () => Promise<DB>): AppOptions {
     db,
     google: env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET } : undefined,
     publicUrl: env.PUBLIC_URL || undefined,
-    secureCookies: env.NODE_ENV === 'production',
   }
 }
