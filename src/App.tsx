@@ -2,6 +2,7 @@ import { Component, lazy, type ReactNode, Suspense, useEffect } from 'react'
 import { useGame } from './game/store'
 import { waitStatus } from './sim/game'
 import { AccountPanel } from './ui/AccountPanel'
+import { CrossSection } from './ui/CrossSection'
 import { useGameLoop, useKeyboard } from './ui/controls'
 import { FightPad } from './ui/FightPad'
 import { FloatView } from './ui/FloatView'
@@ -39,6 +40,7 @@ export function App() {
   const paidShift = useGame((s) => s.session?.kind === 'paid_shift')
   const wide = useGame((s) => s.prefs.wide)
   const fightStyle = useGame((s) => s.prefs.fightStyle)
+  const scene = useGame((s) => s.prefs.scene)
   const claimable = useGame(claimableCount)
   useGameLoop()
   useKeyboard()
@@ -56,10 +58,13 @@ export function App() {
       data-tension={tension.toFixed(2)}
       data-fish-dir={fishDir}
       data-fight-style={fightStyle}
+      data-scene={view === 'office' ? 'office' : scene}
       data-repo={repoKind}
       data-shift={!booted ? 'loading' : shiftOver ? 'over' : inShift ? 'on' : 'none'}
     >
-      {view === '3d' && (
+      {/* Mặt cắt 2D: chỉ SVG, không tải và không gắn Scene3D (đỡ cho máy văn phòng yếu) */}
+      {view === '3d' && scene === '2d' && <CrossSection />}
+      {view === '3d' && scene === '3d' && (
         <SceneBoundary>
           <Suspense fallback={<div className="scene" />}>
             <Scene3D />
@@ -87,9 +92,9 @@ export function App() {
             <summary className="ghost">Thêm</summary>
             <div className="more__menu card" onClick={(e) => e.currentTarget.closest('details')?.removeAttribute('open')}>
               <button type="button" className="ghost" onClick={() => useGame.getState().setView(view === '3d' ? 'office' : '3d')}>
-                {view === '3d' ? 'Chế độ văn phòng' : 'Cảnh 3D'}
+                {view === '3d' ? 'Chế độ văn phòng' : scene === '2d' ? 'Mặt cắt 2D' : 'Cảnh 3D'}
               </button>
-              {view === '3d' && (
+              {view === '3d' && scene === '3d' && (
                 <button type="button" className="ghost" onClick={() => useGame.getState().setPrefs({ wide: !wide })}>
                   {wide ? 'Góc ngồi câu' : 'Góc rộng toàn cảnh'}
                 </button>

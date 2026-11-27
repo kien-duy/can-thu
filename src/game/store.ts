@@ -11,6 +11,7 @@ import {
   type SessionRecord,
   type Sighting,
 } from '../data'
+import { roundsOf } from '../sim/bite'
 import { type GameConfig, type GameEvent, type GameState, initialState, reduce } from '../sim/game'
 import { createRng } from '../sim/rng'
 import { nextVisit, type Visit } from '../sim/wildlife'
@@ -27,7 +28,7 @@ const HOUR_MS = FAST ? 60_000 : 3_600_000
 
 export type ViewMode = '3d' | 'office'
 export type Panel = 'handbook' | 'tray' | 'shop' | 'account' | 'quests' | 'settings' | null
-export type { FightStyle, Prefs, Quality } from './prefs'
+export type { FightStyle, Prefs, Quality, SceneKind } from './prefs'
 
 export interface Toast {
   id: number
@@ -481,10 +482,13 @@ function onTransition(prev: GameState, next: GameState) {
   const st = useGame.getState()
   if (prev.phase === 'charging' && next.phase === 'sinking' && next.bite) {
     st.apply((p) => P.useBait(p))
-    st.alerts.schedule([
-      { at: next.bite.nibbleStart, kind: 'nibble' },
-      { at: next.bite.strikeOpen, kind: 'window' },
-    ])
+    // mỗi đợt cá rỉa lại báo một lần nữa: người đang làm việc lỡ đợt trước vẫn được gọi về
+    st.alerts.schedule(
+      roundsOf(next.bite).flatMap((r) => [
+        { at: r.nibbleStart, kind: 'nibble' as const },
+        { at: r.strikeOpen, kind: 'window' as const },
+      ]),
+    )
   }
   if (next.phase === 'fighting' || next.phase === 'result') st.alerts.clear()
   if (next.phase === 'result' && prev.phase !== 'result' && next.result?.kind === 'landed') void saveCatch(next)

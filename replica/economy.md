@@ -35,14 +35,14 @@ Nhận xét: người chơi chăm lãi khoảng 850 xu/giờ ở hồ dịch v�
 
 ## Mục tiêu
 
-1. Hồ Đồng Xanh, cấp 1, vé 1 giờ: nửa idle lãi nhỏ (vài chục xu, thỉnh thoảng lỗ), chăm lãi rõ (vài trăm xu).
+1. Hồ Đồng Xanh, cấp 1, vé 1 giờ: chăm lãi rõ (vài trăm xu). Nửa idle: ban đầu đặt "lãi nhỏ, vài chục xu, thỉnh thoảng lỗ"; từ 2026-11-27 đổi thành "khoảng một phần ba tới một nửa người chơi chăm" (chênh 2–3 lần), vì người chơi nửa idle là đối tượng chính của game.
 2. Món nâng cấp đáng kể đầu tiên (lưỡi số 5 + cần carbon, 950 xu, có sẵn 500 xu khởi đầu): người chơi chăm mua được sau 1 ca 2 giờ; nửa idle nhanh trong 1–2 ca.
 3. Cả bộ đồ nghề: khoảng 10 giờ chơi chăm, không phải 5.
 4. Sông (cấp 2, miễn phí): khoảng 0,6–0,7 lần hồ dịch vụ. Đổi lại không mất vé, không giới hạn giờ, có loài riêng.
 5. Hồ núi Mây (cấp 4, miễn phí): ngang hoặc hơn hồ dịch vụ một chút (khoảng 1,1 lần), không gấp đôi.
 6. Cấp 2 và cấp 4: không chỉnh lần này (công thức xp nằm trong code, `catchXp`/`levelOf`). Theo số đo: cấp 2 (60 xp) đến ngay sau 1–2 con cá loài mới (+50 xp mỗi loài mới). Cấp 4 (540 xp) đến sau khoảng 1–1,5 giờ chơi chăm, tính cả thưởng loài mới ở Hồ Đồng Xanh; nửa idle (39 xp/giờ) cần khoảng 5 giờ, tức 2–3 ngày.
 
-Giới hạn: nửa idle chậm 20–60 s thì bỏ lỡ gần 80 % lượt cắn câu ở hồ dịch vụ và 95 % ở sông, vì cá rỉa chỉ 10–30 s (mương 10–16 s). Tỉ lệ giữa người chơi chăm và nửa idle (khoảng 5 lần ở hồ, 30 lần ở sông) là do nhịp cá cắn, giá cả không đổi được. Đổi giá chỉ dời cả hai lên hoặc xuống. Vì thế giá được chỉnh để người chơi chăm hết "giàu nhanh", còn nửa idle vẫn có lãi nhỏ. Thưởng nhiệm vụ ngày (khoảng 150 xu/ngày, không phụ thuộc số cá) giữ nguyên, nên tính tương đối nó nặng gấp đôi trước, và đỡ cho người chơi nửa idle nhiều nhất.
+Giới hạn (cập nhật 2026-11-27, sau khi đổi nhịp cá cắn): trước đây nửa idle chậm 20–60 s thì bỏ lỡ gần 80 % lượt cắn câu ở hồ dịch vụ và 95 % ở sông, vì cá rỉa chỉ 10–30 s (mương 10–16 s) rồi bỏ đi; tỉ lệ giữa người chơi chăm và nửa idle (khoảng 5 lần ở hồ, 30 lần ở sông, tính theo cá) do nhịp cá cắn quyết định, giá cả không đổi được. Nay cá không giật kịp thì rỉa lại nhiều đợt (xem "Sau khi đổi nhịp cá cắn" bên dưới): nửa idle lỡ khoảng 36 % ở hồ và 46 % ở sông, chăm câu nhiều gấp khoảng 1,9 lần ở hồ và 2,2 lần ở sông, lãi gấp 2–2,4 lần. Phần chênh còn lại là thời gian quay lại và cú giật đúng nhịp, vẫn là kỹ năng. Vì thế mục tiêu 1 (nửa idle chỉ lãi vài chục xu) không còn đúng: với nhịp mới nửa idle lãi khoảng một nửa người chơi chăm. Giá không chỉnh lại (xem lý do ở dưới). Thưởng nhiệm vụ ngày (khoảng 150 xu/ngày, không phụ thuộc số cá) giữ nguyên.
 
 ## Đã chỉnh
 
@@ -87,7 +87,37 @@ Số giờ chơi để mua (tính từ 500 xu khởi đầu, vé 2 giờ, chưa 
 
 ## Còn chưa chắc
 
-- Mô hình người chơi nửa idle là giả định (thời gian phản ứng, 30 s nhìn phao sau khi quăng, cách xả mồi). Lãi của họ nhạy với các giả định này hơn nhiều so với giá: phản ứng trong 5–25 s thay vì 20–60 s là lãi gấp gần 10 lần.
-- Ở sông, người chơi nửa idle gần như không câu được gì (mương rỉa 10–16 s, cửa sổ giật 0,6 s). Giá không sửa được việc này. Muốn sửa phải đổi nhịp cắn câu của loài sông, tức sửa sim, ngoài phạm vi lần chỉnh này.
+- Mô hình người chơi nửa idle là giả định (thời gian phản ứng, 30 s nhìn phao sau khi quăng, cách xả mồi). Lãi của họ nhạy với các giả định này hơn nhiều so với giá: trước khi đổi nhịp cá cắn, phản ứng trong 5–25 s thay vì 20–60 s là lãi gấp gần 10 lần; nay chỉ còn khoảng 1,7 lần.
+- ~~Ở sông, người chơi nửa idle gần như không câu được gì~~: đã sửa bằng nhịp cá rỉa nhiều đợt (2026-11-27), nay lỡ khoảng 46 % lượt cắn.
 - Cấp lên nhanh với người chơi chăm (cấp 4 sau khoảng 1–1,5 giờ). Muốn chậm lại thì phải sửa `catchXp`/`levelOf` (code), chưa làm.
 - Bộ đồ trong số đo không lệch (dây không khoẻ hơn cần), nên không có ca gãy cần. Không tính việc đổi bài mồi giữa ca, câu ban đêm (lăng, ngạnh), hay người chơi kéo cá vụng hơn `fightUntilLandable`.
+
+## Sau khi đổi nhịp cá cắn (2026-11-27)
+
+Thay đổi trong sim (`src/sim/bite.ts`, hằng `REBITE`): cá không bị giật kịp thì không bỏ đi ngay. Cá nhả mồi, lượn 6–16 s rồi rỉa đợt mới, pha rỉa dài như đợt đầu, cửa sổ giật cùng cỡ. Tối đa 4 đợt kể cả đợt đầu; mỗi lần quay lại có 25 % cá hoảng bỏ đi hẳn; đợt nào mà cửa sổ giật rơi sau lúc mồi rã thì không có. Giật sớm (lúc cá đang rỉa) vẫn hỏng, giật lúc cá vừa nhả mồi giữa hai đợt là muộn, cá bỏ đi. Mỗi đợt rỉa báo động (tiêu đề tab, tiếng "tách", thông báo hệ thống) lại một lần. Con cá, cân nặng và các mốc của đợt đầu giữ nguyên với cùng seed, nên người chơi chăm không đổi gì.
+
+Đo lại bằng script mới (cùng cách đo ở trên, 100 ca mỗi cấu hình; script cũ không còn nên đo lại cả cột "trước" để so cho công bằng). Ca ở sông và núi dài 2 giờ, đồ khởi đầu trừ khi ghi khác. "lỡ cắn" = tỉ lệ lượt có cá tới mà không móc được (giật sai, tới muộn, cá bỏ đi).
+
+| Cấu hình | Kiểu | lỡ cắn (trước) | cá/h (trước) | bán/h | mồi/h | **lãi/h** (trước) | lỗ (trước) |
+|---|---|---:|---:|---:|---:|---:|---:|
+| Hồ Đồng Xanh, đồ cấp 1, vé 1 h | chăm | 7 % (7 %) | 39,7 (39,7) | 490 | 29 | **431** (431) | 0 % (0 %) |
+| | nửa idle | 36 % (81 %) | 21,5 (7,4) | 262 | 25 | **207** (37) | 0 % (21 %) |
+| | nửa idle nhanh | 19 % (31 %) | 33,2 (30,0) | 404 | 29 | **345** (312) | 0 % (0 %) |
+| Hồ Đồng Xanh, đồ cấp 1, vé 2 h | chăm | 8 % (8 %) | 39,5 (39,5) | 480 | 28 | **426** (426) | 0 % (0 %) |
+| | nửa idle | 36 % (81 %) | 21,6 (7,3) | 263 | 24 | **214** (42) | 0 % (11 %) |
+| Bến sông làng, cám thơm | chăm | 8 % (8 %) | 36,2 (36,2) | 317 | 19 | **298** (298) | 0 % (0 %) |
+| | nửa idle | 46 % (94 %) | 16,1 (2,0) | 139 | 16 | **123** (14) | 0 % (38 %) |
+| | nửa idle nhanh | 24 % (50 %) | 27,5 (19,8) | 248 | 18 | **230** (198) | 0 % (0 %) |
+| Hồ núi Mây, ngô chua, lửng, lưỡi 8 | chăm | 8 % (8 %) | 25,4 (25,4) | 474 | 19 | **455** (455) | 0 % (0 %) |
+| | nửa idle | 49 % (89 %) | 12,1 (2,8) | 229 | 17 | **212** (39) | 0 % (7 %) |
+| | nửa idle nhanh | 19 % (28 %) | 22,0 (20,1) | 409 | 19 | **390** (363) | 0 % (0 %) |
+
+Cột "trước" khớp bảng "Sau khi chỉnh" ở trên trong vài phần trăm (nửa idle ở hồ 37 so với 30 xu/giờ, do mô hình người chơi viết lại).
+
+Nhận xét:
+
+- Chênh giữa chăm và nửa idle: ở hồ 1,9 lần theo cá, 2,1 lần theo lãi (trước 5,4 và 12 lần); ở sông 2,2 và 2,4 lần (trước 18 và 21 lần). Nằm trong khoảng 2–3 lần đặt ra.
+- Người chơi chăm và nửa idle nhanh gần như không đổi: họ thường giật ngay đợt đầu.
+- Hồ núi Mây lỡ nhiều hơn (49 %), có lẽ vì chờ cá lâu (45–160 s): cá thường tới khi mồi đã gần rã, nên còn ít đợt rỉa lại. Chưa đo tách riêng. Vẫn dưới 60 %.
+- Không chỉnh giá: người chơi chăm giữ đúng mục tiêu 2–5 (lãi ~430 xu/giờ ở hồ, cả bộ đồ nghề sau ~10 giờ, sông ~0,7 lần hồ, núi ~1,05 lần). Hạ giá để kéo nửa idle về "vài chục xu" sẽ làm hỏng các mục tiêu này mà vẫn giữ nguyên tỉ lệ chênh, nên mục tiêu 1 được viết lại thay vì chỉnh giá.
+- Nửa idle nay mua được lưỡi số 5 + cần carbon (cần thêm 450 xu) sau khoảng 2 giờ, cả bộ đồ nghề sau khoảng 20 giờ (trước: 12 giờ và vài tuần). Nửa idle cũng lên cấp nhanh hơn trước khoảng 3 lần (theo số cá); chưa đo xp riêng.

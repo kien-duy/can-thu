@@ -24,6 +24,14 @@ export function SettingsPanel() {
     <Sheet title="Cài đặt" aside="Riêng máy này">
       <div className="stack">
         <Choice
+          label="Cảnh câu"
+          k="scene"
+          options={[
+            { v: '3d', label: '3D', note: 'Cảnh hồ ba chiều' },
+            { v: '2d', label: 'Mặt cắt 2D', note: 'Nhìn ngang bờ, nước đục, chỉ thấy bóng cá. Nhẹ máy' },
+          ]}
+        />
+        <Choice
           label="Chất lượng đồ hoạ 3D"
           k="quality"
           options={[

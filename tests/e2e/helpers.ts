@@ -83,13 +83,15 @@ export async function fightUntilLandable(page: Page) {
 /**
  * Đợi phao báo ăn thật rồi giật (như người đang nhìn phao). Đọc mốc thời gian của lượt câu qua móc test
  * (chỉ có ở ?fast=1) thay vì đợi trang vẽ ra "window": máy CI vẽ 3D bằng phần mềm có khi chỉ vài khung hình
- * mỗi giây, cửa sổ giật 0,8 s có thể trôi qua giữa hai lần vẽ.
+ * mỗi giây, cửa sổ giật 0,8 s có thể trôi qua giữa hai lần vẽ. Cá rỉa nhiều đợt: lỡ cửa sổ đợt này
+ * (máy test chậm) thì giật ở cửa sổ của đợt sau.
  */
 export async function strikeOnWindow(page: Page, timeoutMs = 30_000) {
   const r = await page.evaluate(
     (timeout) =>
       new Promise<string>((resolve) => {
-        type Bite = { strikeOpen: number; strikeClose: number; empty?: boolean }
+        type Win = { strikeOpen: number; strikeClose: number }
+        type Bite = Win & { empty?: boolean; rounds?: Win[] }
         type St = { game: { phase: string; bite?: Bite } }
         const store = (globalThis as unknown as { __canThu?: { getState(): St } }).__canThu
         if (!store) return resolve('không có móc test: mở trang với ?fast=1')
@@ -98,7 +100,8 @@ export async function strikeOnWindow(page: Page, timeoutMs = 30_000) {
           const { game } = store.getState()
           const b = game.bite
           const now = Date.now()
-          if (b && !b.empty && (game.phase === 'waiting' || game.phase === 'sinking') && now >= b.strikeOpen + 60 && now <= b.strikeClose - 60) {
+          const inWindow = (b?.rounds ?? (b ? [b] : [])).some((w) => now >= w.strikeOpen + 60 && now <= w.strikeClose - 60)
+          if (b && !b.empty && (game.phase === 'waiting' || game.phase === 'sinking') && inWindow) {
             window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ', bubbles: true }))
             window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Space', key: ' ', bubbles: true }))
             clearInterval(timer)

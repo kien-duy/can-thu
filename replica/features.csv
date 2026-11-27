@@ -40,7 +40,7 @@ Kỷ lục cá to nhất theo loài,handbook,should,yes,yes,
 Cài đặt chất lượng đồ hoạ Thấp/Vừa/Cao,settings,should,no,yes,
 Cài đặt cỡ khung phao / kiểu kéo cá,settings,should,yes,yes,"cỡ khung phao có; hai kiểu kéo cá: nút và phím (giữ để ghì, A/D) hoặc rê chuột, ngón tay (giữ để ghì, rê ngang để dòng)"
 Thành tích có bậc,meta,could,yes,no,Bản gốc 101 bậc / 34 danh hiệu
-Mặt cắt 2D,visual,could,yes,no,
+Mặt cắt 2D,visual,could,yes,yes,"Cài đặt → Cảnh câu → Mặt cắt 2D: SVG, không tải 3D; nước đục, bóng cá không lộ loài, bóng cá cắn câu theo đúng kế hoạch cắn của sim; người câu gồng khi giữ nút; mặt hồ có sóng, gợn, lấp lánh, theo giờ và thời tiết"
 Hàng xóm NPC câu cá quanh hồ,visual,could,yes,no,
 Sơ đồ hồ đổi chỗ ngồi,locations,could,yes,no,
 Đi dạo quanh hồ / quán nước,world,could,yes,no,

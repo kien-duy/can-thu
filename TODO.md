@@ -1,7 +1,7 @@
 # TODO
 
-Cập nhật 2026-11-27. Đã xong M0 → M3, cộng thêm dòng cá, gãy cần, lưỡi câu. CI xanh ở commit `073f964`.
-Trạng thái từng tính năng nằm trong [`replica/features.csv`](replica/features.csv): 39 yes, 1 partial, 10 no (chưa tính các mục skip).
+Cập nhật 2026-11-27. Đã xong M0 → M3, cộng thêm dòng cá, gãy cần, lưỡi câu. CI xanh ở commit `ddc776f`.
+Trạng thái từng tính năng nằm trong [`replica/features.csv`](replica/features.csv): 40 yes, 1 partial, 9 no (chưa tính các mục skip).
 
 Kế hoạch đã chốt cho lần làm tiếp: cho subagent làm **lần lượt** từng mục bên dưới (mỗi lần một agent, xong thì chạy lại toàn bộ test rồi mới sang mục sau), để chơi được đầy đủ trên máy.
 
@@ -30,13 +30,14 @@ Bỏ Supabase, chuyển sang mô hình caro-clone: server Hono trong `server/`, 
 - [x] Dây 1.5 mua được từ cấp 1; lắp với cần tre thì cần gãy trước thẻo. Cửa hàng nay cảnh báo ngay trên món dây khoẻ hơn cần đang lắp, và trên món cần yếu hơn dây đang lắp (xong 2026-11-27)
 - [x] Lời gợi ý trong trận kéo đổi liên tục trong vùng `aria-live`: trình đọc màn hình đọc quá nhiều. Đã tách: lời gợi ý trên màn hình không còn `aria-live`; một vùng đọc ẩn riêng chỉ đổi khi cá đổi hướng, cá đuối, dây sắp đứt, hoặc có kết quả (xong 2026-11-27)
 - [x] Kinh tế (xong 2026-11-27): đo bằng sim thật, 100 ca mỗi cấu hình. Trước đó chơi chăm ở Hồ Đồng Xanh lãi ~850 xu/giờ, nửa idle ~60, Hồ núi Mây gấp đôi hồ dịch vụ. Đã chia đôi giá cá, vé và giá mồi; hệ số bán ở sông 0,7→0,85, ở Hồ núi Mây 0,7→0,4. Nay chơi chăm lãi ~430 xu/giờ, nửa idle ~30–45; sông bằng ~0,65 lần hồ dịch vụ, núi ~1,1 lần. Bảng số liệu và mục tiêu ở [`replica/economy.md`](replica/economy.md)
+- [x] Nhịp cá cắn cho người chơi nửa idle (xong 2026-11-27): trước đây cá rỉa 10–30 s rồi qua cửa sổ giật là bỏ đi, người quay lại sau báo rỉa 20–60 s lỡ ~80 % lượt cắn ở hồ dịch vụ, ~95 % ở sông. Nay cá không giật kịp thì nhả mồi, lượn 6–16 s rồi rỉa đợt mới (tối đa 4 đợt, mỗi lần quay lại 25 % cá hoảng bỏ đi, mồi rã thì hết đợt); mỗi đợt báo động lại. Cửa sổ giật vẫn ngắn, giật sớm vẫn hỏng. Nửa idle nay lỡ ~36 % ở hồ, ~46 % ở sông; chăm lãi gấp ~2 lần nửa idle (trước ~12 lần). `REBITE` trong `src/sim/bite.ts`, test `src/sim/rebite.test.ts`, số đo trong [`replica/economy.md`](replica/economy.md)
 
 ## 4. M4: có thì tốt
 
 - [ ] Thành tích có bậc, danh hiệu
 - [ ] PWA: manifest, service worker, cài lên màn hình chính
 - [ ] Tiếng Anh: tách chuỗi ra file i18n
-- [ ] Mặt cắt 2D: nhìn ngang bờ, thấy dây, chì, mồi, cá dưới nước
+- [x] Mặt cắt 2D (xong 2026-11-27): Cài đặt → Cảnh câu → "Mặt cắt 2D" (`prefs.scene`, bản lưu cũ mặc định 3D). Vẽ bằng SVG trong `src/ui/CrossSection.tsx`, không tải và không gắn Scene3D. Nhìn ngang bờ: người câu đội nón ngồi ghế, nước đục dần theo độ sâu (quanh lưỡi bớt đục để thấy mồi), bóng cá mờ cùng một hình, cỡ trong khoảng chung hẹp, không lộ loài hay cân nặng. Bóng cá cắn câu đi theo kế hoạch cắn của sim: tới giờ rỉa thì bơi lại, mỗi nhịp phao giật là một lần đớp, cửa sổ giật thì ngậm mồi, lỡ thì lượn vòng chờ đợt sau, hết đợt thì bỏ đi; kế hoạch rỗng thì không có bóng nào. Trận kéo: giữ nút/Space/chuột thì người ngả ra sau gồng, cần cong; cá bị dắt về bờ, vùng sát mặt thì bắn bọt; gãy cần thì khúc ngọn gập, đứt dây thì dây chùng và bóng vụt đi; vớt thì nhấc bóng cá lên (bảng kết quả mới nói cá gì). Mặt hồ: sóng nhiều lớp, phao nhấp nhô, gợn lúc quăng, lúc phao giật, lúc giật dính và lúc nhấc cá, lấp lánh, vệt nắng dưới nước; màu theo giờ và thời tiết, đêm tối hơn, mưa có hạt lăn tăn. Giảm chuyển động thì ít bóng, sóng nhỏ, không lấp lánh; tab ẩn thì cảnh dừng. Toán vị trí trong `src/game/crossSection.ts` (test `crossSection.test.ts`), e2e `tests/e2e/cross-section.spec.ts`. Chưa xem cảnh gãy cần bằng mắt (chỉ có unit test)
 - [ ] Sơ đồ hồ, đổi chỗ ngồi
 - [ ] Hàng xóm NPC câu quanh hồ
 - [ ] Đi dạo quanh hồ, quán nước

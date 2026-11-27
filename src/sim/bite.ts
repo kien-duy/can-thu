@@ -9,6 +9,11 @@ import { dissolveMs, type Setup, signalScale, speciesWeight, waitFactor } from '
  *
  * Cửa sổ rỉa dài (10–40 s) là chủ ý: người đang làm việc nhận báo động lúc cá bắt đầu rỉa,
  * quay lại kịp xem phao trước khi tới cửa sổ giật.
+ *
+ * Với loài cá thật (planSpeciesBite), cá không giật kịp thì chưa bỏ đi ngay: nhả mồi, lượn một lúc rồi
+ * rỉa lại, thành nhiều "đợt" (rounds), mỗi đợt có pha rỉa và cửa sổ giật riêng. Mỗi lần quay lại cá có thể
+ * hoảng mà bỏ đi; mồi rã hết thì không còn đợt nào nữa. Cửa sổ giật vẫn ngắn, giật sớm vẫn hỏng:
+ * chỉ người vắng mặt lúc đợt đầu là có thêm cơ hội.
  */
 export interface BiteParams {
   waitSec: readonly [number, number]
@@ -29,11 +34,31 @@ export interface Twitch {
   amp: number
 }
 
-export interface BitePlan {
-  castAt: number
+/** Một đợt cá rỉa: pha rỉa thử rồi cửa sổ ăn thật. */
+export interface BiteRound {
   nibbleStart: number
   strikeOpen: number
   strikeClose: number
+}
+
+/** nibbleStart, strikeOpen, strikeClose là của đợt đầu tiên. */
+export interface BitePlan extends BiteRound {
+  castAt: number
+  /** mọi đợt rỉa theo thứ tự thời gian, đợt đầu trùng các mốc ở trên; không có = chỉ một đợt */
+  rounds?: readonly BiteRound[]
+}
+
+/**
+ * Cá rỉa lại sau khi nhả mồi. Không giật kịp đợt trước thì cá lượn quanh pauseSec giây rồi rỉa đợt mới
+ * (pha rỉa dài như đợt đầu, cùng cỡ cửa sổ giật). Mỗi lần quay lại có spookChance cá bỏ đi hẳn.
+ * Tối đa maxRounds đợt, kể cả đợt đầu.
+ */
+export const REBITE = {
+  maxRounds: 4,
+  pauseSec: [6, 16] as const,
+  spookChance: 0.25,
+  /** khoảng lặng tối thiểu giữa hai đợt (ms, cả ở chế độ nhanh): đủ cho phao trả về nấc cũ */
+  minPauseMs: 3_000,
 }
 
 export interface SpeciesBitePlan extends BitePlan {
@@ -45,6 +70,7 @@ export interface SpeciesBitePlan extends BitePlan {
   dissolveAt: number
   /** true = mồi rã trước khi có cá tới: lượt này không có cá */
   empty: boolean
+  rounds: readonly BiteRound[]
 }
 
 export function planBite(rng: Rng, castAt: number, p: BiteParams = DEFAULT_BITE): BitePlan {
@@ -99,52 +125,91 @@ export function planSpeciesBite(
   const strikeOpen = nibbleStart + between(rng, species.bite.nibbleSec[0], species.bite.nibbleSec[1]) * 1000 * scale
   const windowMs = species.bite.windowSec * 1000 * Math.max(scale, 1)
   const twitches: Twitch[] = []
-  let t = nibbleStart
   const [eMin, eMax] = species.bite.decoy.everySec
   const every = (x: number) => (x * 1000 * Math.max(scale, 0.25)) / Math.max(0.3, falseBites)
-  while (true) {
-    t += between(rng, every(eMin), every(eMax))
-    if (t > strikeOpen - 700) break
-    twitches.push({ at: t, durMs: between(rng, 250, 500), amp: species.bite.decoy.amp * amp * between(rng, 0.6, 1.2) })
+  const addTwitches = (from: number, open: number) => {
+    let t = from
+    while (true) {
+      t += between(rng, every(eMin), every(eMax))
+      if (t > open - 700) break
+      twitches.push({ at: t, durMs: between(rng, 250, 500), amp: species.bite.decoy.amp * amp * between(rng, 0.6, 1.2) })
+    }
+    if (species.bite.signal.kind === 'slow_sink') {
+      // chép, trắm: "chớp đầu" ngay trước khi ăn thật. Phao tụt rồi bật về, cá mới ngậm hờ.
+      twitches.push({ at: open - 650, durMs: 380, amp: 0.55 * amp })
+    }
   }
-  if (species.bite.signal.kind === 'slow_sink') {
-    // chép, trắm: "chớp đầu" ngay trước khi ăn thật. Phao tụt rồi bật về, cá mới ngậm hờ.
-    twitches.push({ at: strikeOpen - 650, durMs: 380, amp: 0.55 * amp })
-  }
+  addTwitches(nibbleStart, strikeOpen)
   // chế độ nhanh không thu mồi rã nhỏ bằng thời gian chờ, kẻo lượt nào cũng rã trước khi cá tới
   const dissolveAt = o.settledAt + (o.setup ? dissolveMs(o.setup.bait) : 600_000) * Math.max(scale, 0.25)
+  const empty = nibbleStart >= dissolveAt
+  // cân nặng rút trước các đợt rỉa lại, để cùng seed vẫn ra đúng con cá như trước khi có nhiều đợt
+  const weightG = sampleWeight(rng, species)
+  const rounds: BiteRound[] = [{ nibbleStart, strikeOpen, strikeClose: strikeOpen + windowMs }]
+  while (!empty && rounds.length < REBITE.maxRounds) {
+    if (rng() < REBITE.spookChance) break
+    const prev = rounds[rounds.length - 1]!
+    const start = prev.strikeClose + Math.max(REBITE.minPauseMs, between(rng, REBITE.pauseSec[0], REBITE.pauseSec[1]) * 1000 * scale)
+    const open = start + between(rng, species.bite.nibbleSec[0], species.bite.nibbleSec[1]) * 1000 * scale
+    // cá chỉ ăn được khi trên lưỡi còn mồi
+    if (open + windowMs > dissolveAt) break
+    addTwitches(start, open)
+    rounds.push({ nibbleStart: start, strikeOpen: open, strikeClose: open + windowMs })
+  }
   return {
     dissolveAt,
-    empty: nibbleStart >= dissolveAt,
+    empty,
     castAt: o.castAt,
     nibbleStart,
     strikeOpen,
     strikeClose: strikeOpen + windowMs,
+    rounds,
     speciesId: species.id,
-    weightG: sampleWeight(rng, species),
+    weightG,
     signal: { kind: species.bite.signal.kind, amp: species.bite.signal.amp * amp },
     twitches,
   }
 }
 
+/** Các đợt rỉa của kế hoạch (kế hoạch cũ không có rounds thì coi như một đợt). */
+export function roundsOf(plan: BitePlan): readonly BiteRound[] {
+  return plan.rounds && plan.rounds.length > 0 ? plan.rounds : [plan]
+}
+
+/** Đợt rỉa đã bắt đầu gần nhất tại t (đang rỉa, đang mở cửa sổ, hoặc vừa nhả mồi); trước đợt đầu thì là đợt đầu. */
+export function roundAt(plan: BitePlan, t: number): BiteRound {
+  const rs = roundsOf(plan)
+  let r = rs[0]!
+  for (const x of rs) if (x.nibbleStart <= t) r = x
+  return r
+}
+
+/** Đợt cuối: qua cửa sổ này là cá bỏ đi hẳn. */
+export function lastRound(plan: BitePlan): BiteRound {
+  const rs = roundsOf(plan)
+  return rs[rs.length - 1]!
+}
+
 export type StrikeResult = 'hooked' | 'too_early' | 'too_late' | 'nothing'
 
-/** Chấm cú giật tại thời điểm t. */
+/** Chấm cú giật tại thời điểm t. Giật lúc cá vừa nhả mồi, giữa hai đợt, cũng là muộn: cá hoảng bỏ đi. */
 export function judgeStrike(plan: BitePlan & { empty?: boolean }, t: number): StrikeResult {
   if (plan.empty || t < plan.nibbleStart) return 'nothing'
-  if (t < plan.strikeOpen) return 'too_early'
-  if (t <= plan.strikeClose) return 'hooked'
+  const r = roundAt(plan, t)
+  if (t < r.strikeOpen) return 'too_early'
+  if (t <= r.strikeClose) return 'hooked'
   return 'too_late'
 }
 
 export type BiteEventKind = 'nibble_start' | 'strike_open' | 'strike_close'
 
+/** Mốc của mọi đợt rỉa, theo thứ tự thời gian: mỗi đợt một bộ rỉa / mở cửa sổ / đóng cửa sổ. */
 export function biteEvents(plan: BitePlan): { at: number; kind: BiteEventKind }[] {
-  return [
-    { at: plan.nibbleStart, kind: 'nibble_start' },
-    { at: plan.strikeOpen, kind: 'strike_open' },
-    { at: plan.strikeClose, kind: 'strike_close' },
-  ]
+  return roundsOf(plan).flatMap((r) => [
+    { at: r.nibbleStart, kind: 'nibble_start' as const },
+    { at: r.strikeOpen, kind: 'strike_open' as const },
+    { at: r.strikeClose, kind: 'strike_close' as const },
+  ])
 }
 
 const ease = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x))
@@ -164,11 +229,12 @@ export function floatOffset(plan: SpeciesBitePlan, t: number): number {
     const x = (t - w.at) / w.durMs
     if (x > 0 && x < 1) off += w.amp * Math.sin(Math.PI * x)
   }
-  if (t >= plan.strikeOpen) {
+  const r = roundAt(plan, t)
+  if (t >= r.strikeOpen) {
     const { kind, amp } = plan.signal
-    const sinceOpen = t - plan.strikeOpen
-    const windowMs = plan.strikeClose - plan.strikeOpen
-    const holdEnd = plan.strikeClose + 1200
+    const sinceOpen = t - r.strikeOpen
+    const windowMs = r.strikeClose - r.strikeOpen
+    const holdEnd = r.strikeClose + 1200
     const fade = 1 - ease((t - holdEnd) / 1500) // cá nhả mồi, phao trả về nấc cũ
     const shape = kind === 'slow_sink' ? ease(sinceOpen / windowMs) : ease(sinceOpen / 180)
     off += (kind === 'rise' ? -amp : amp) * shape * fade

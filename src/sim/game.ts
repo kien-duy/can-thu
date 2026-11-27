@@ -3,10 +3,11 @@
  *
  *   ready ─giữ─▶ charging ─thả─▶ sinking ─▶ waiting ─giật đúng─▶ fighting ⇄ landable ─vớt─▶ result(landed)
  *                                              └─giật sai / cá bỏ đi──────────▶ result(missed)
+ *   (chờ: cá rỉa từng đợt; lỡ cửa sổ giật thì cá rỉa lại đợt sau, hết đợt mới bỏ đi. Xem bite.ts)
  *                                                      fighting ─đứt / gãy cần / sổng─▶ result(lost)
  */
 import { type Location, type Species, speciesOf } from '../content'
-import { judgeStrike, planSpeciesBite, type SpeciesBitePlan } from './bite'
+import { judgeStrike, lastRound, planSpeciesBite, roundAt, type SpeciesBitePlan } from './bite'
 import { advanceFight, brokenPart, type FightState, initFight, outcomeOf, STEP_MS } from './fight'
 import { createRng } from './rng'
 import type { Setup } from './setup'
@@ -14,7 +15,7 @@ import type { Setup } from './setup'
 export const CHARGE_FULL_MS = 1200
 export const MIN_POWER = 0.15
 export const SINK_MS = 3000
-/** Cá bỏ đi sau khi cửa sổ giật đóng bao lâu. */
+/** Cá bỏ đi sau khi cửa sổ giật của đợt rỉa cuối đóng bao lâu. */
 export const LEAVE_AFTER_MS = 3500
 /** Máy lag (khung hình thưa) thì trận kéo vẫn tiến, nhưng không quá ngần này mỗi nhịp. */
 export const MAX_FIGHT_TICK_MS = 1000
@@ -168,7 +169,7 @@ function tick(_cfg: GameConfig, s: GameState, t: number, paused: boolean): GameS
   if (s.phase === 'waiting' && s.bite!.empty && t > s.bite!.dissolveAt) {
     return { ...s, phase: 'result', result: { kind: 'bait_gone' }, lastTick: t }
   }
-  if (s.phase === 'waiting' && !s.bite!.empty && t > s.bite!.strikeClose + LEAVE_AFTER_MS) {
+  if (s.phase === 'waiting' && !s.bite!.empty && t > lastRound(s.bite!).strikeClose + LEAVE_AFTER_MS) {
     return { ...s, phase: 'result', result: { kind: 'gone', speciesId: s.bite!.speciesId }, lastTick: t }
   }
   if ((s.phase === 'fighting' || s.phase === 'landable') && s.fight) {
@@ -207,7 +208,9 @@ export function waitStatus(s: GameState, t: number): WaitStatus | undefined {
   if (s.phase === 'sinking') return 'settling'
   if (s.phase !== 'waiting' || !s.bite) return undefined
   if (s.bite.empty || t < s.bite.nibbleStart) return 'quiet'
-  if (t < s.bite.strikeOpen) return 'nibbling'
-  if (t <= s.bite.strikeClose) return 'window'
+  // 'after' = cá vừa nhả mồi: giữa hai đợt rỉa, hoặc sau đợt cuối trước khi cá bỏ đi
+  const r = roundAt(s.bite, t)
+  if (t < r.strikeOpen) return 'nibbling'
+  if (t <= r.strikeClose) return 'window'
   return 'after'
 }

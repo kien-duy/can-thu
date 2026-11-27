@@ -70,6 +70,17 @@ button:focus-visible {
   position: absolute !important;
   inset: 0;
 }
+/* Mặt cắt 2D: SVG phủ cả nền, không nhận chuột (nút, mặt kéo cá nằm trên) */
+.cross-section {
+  overflow: hidden;
+  pointer-events: none;
+  background: #26301f;
+}
+.cross-section svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 .scene-fallback {
   display: grid;
   place-items: center;

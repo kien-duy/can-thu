@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { type Location, SPECIES, speciesOf } from '../content'
-import { floatOffset, judgeStrike, planSpeciesBite, type SpeciesBitePlan, type StrikeResult } from '../sim/bite'
+import { floatOffset, judgeStrike, planSpeciesBite, roundAt, type SpeciesBitePlan, type StrikeResult } from '../sim/bite'
 import { createRng } from '../sim/rng'
 import { FloatSvg } from './FloatView'
 
@@ -53,7 +53,8 @@ export function RhythmLab({ unlocked }: { unlocked: Set<string> }) {
   }, [])
   if (list.length === 0) return <p className="muted">Câu được một loài để mở nhịp phao của loài đó.</p>
   const sp = speciesOf(speciesId)
-  const phase = now < plan.nibbleStart ? 'Chờ cá…' : now < plan.strikeOpen ? 'Cá đang rỉa: chờ' : now <= plan.strikeClose ? 'Ăn thật: GIẬT!' : 'Cá nhả mồi'
+  const round = roundAt(plan, now)
+  const phase = now < plan.nibbleStart ? 'Chờ cá…' : now < round.strikeOpen ? 'Cá đang rỉa: chờ' : now <= round.strikeClose ? 'Ăn thật: GIẬT!' : 'Cá nhả mồi'
   const restart = (sid = speciesId) => {
     setSpecies(sid)
     setRun((r) => ({ seed: r.seed + 1, t0: Date.now() }))
@@ -70,7 +71,7 @@ export function RhythmLab({ unlocked }: { unlocked: Set<string> }) {
       </div>
       <div className="lab__body">
         <div className="lab__float">
-          <FloatSvg pose={{ visible: true, sink: floatOffset(plan, now), tilt: 0 }} alert={now >= plan.strikeOpen && now <= plan.strikeClose} />
+          <FloatSvg pose={{ visible: true, sink: floatOffset(plan, now), tilt: 0 }} alert={now >= round.strikeOpen && now <= round.strikeClose} />
         </div>
         <div className="stack">
           <p>

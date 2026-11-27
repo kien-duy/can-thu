@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { LOCATIONS, SPECIES, speciesOf } from '../content'
-import { floatOffset } from './bite'
+import { floatOffset, lastRound } from './bite'
 import { advanceFight, initFight, outcomeOf } from './fight'
 import { type GameConfig, type GameState, initialState, reduce, waitStatus } from './game'
 
@@ -56,12 +56,12 @@ describe('vòng câu', () => {
     }
   })
 
-  it('giật lúc cá đang rỉa là sớm; không giật thì cá bỏ đi', () => {
+  it('giật lúc cá đang rỉa là sớm; không giật thì hết các đợt rỉa cá bỏ đi', () => {
     const c = cfg(5)
     const s = castAt(c)
     const early = reduce(c, { ...s, phase: 'waiting' }, { type: 'strike', t: s.bite!.nibbleStart + 100 })
     expect(early.result?.kind).toBe('too_early')
-    const gone = reduce(c, { ...s, phase: 'waiting' }, { type: 'tick', t: s.bite!.strikeClose + 10_000 })
+    const gone = reduce(c, { ...s, phase: 'waiting' }, { type: 'tick', t: lastRound(s.bite!).strikeClose + 10_000 })
     expect(gone.result?.kind).toBe('gone')
   })
 

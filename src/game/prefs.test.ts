@@ -12,7 +12,7 @@ describe('cài đặt kiểu kéo cá', () => {
 
   it('bản lưu cũ chưa có kiểu kéo: giữ nguyên các mục khác, kiểu kéo lấy mặc định', () => {
     const p = parsePrefs({ quality: 'low', floatSize: 'l', sound: false, wide: true, xray: true })
-    expect(p).toEqual({ quality: 'low', floatSize: 'l', sound: false, wide: true, xray: true, fightStyle: 'keys' })
+    expect(p).toEqual({ quality: 'low', floatSize: 'l', sound: false, wide: true, xray: true, fightStyle: 'keys', scene: '3d' })
   })
 
   it('giữ kiểu rê đã chọn; giá trị lạ thì về mặc định', () => {
@@ -28,5 +28,21 @@ describe('cài đặt kiểu kéo cá', () => {
     expect(actionFor(s, 0, { hasBait: true, sounded: true, fightStyle: 'drag' }).hint).toContain('rê sang phải')
     const right = { ...s, fight: { ...fight, fishDir: 1 as const } }
     expect(actionFor(right, 0, { hasBait: true, sounded: true, fightStyle: 'drag' }).hint).toContain('rê sang trái')
+  })
+})
+
+describe('cài đặt cảnh mặt cắt 2D', () => {
+  it('mặc định vẫn là cảnh 3D; bản lưu cũ chưa có mục này vẫn đọc được, các mục khác giữ nguyên', () => {
+    expect(DEFAULT_PREFS.scene).toBe('3d')
+    const p = parsePrefs({ quality: 'low', fightStyle: 'drag', xray: true })
+    expect(p.scene).toBe('3d')
+    expect(p.fightStyle).toBe('drag')
+    expect(p.quality).toBe('low')
+  })
+
+  it('giữ lựa chọn 2D; giá trị lạ thì về 3D', () => {
+    expect(parsePrefs({ scene: '2d' }).scene).toBe('2d')
+    expect(parsePrefs({ scene: 'webgl' }).scene).toBe('3d')
+    expect(parsePrefs({ scene: 2 }).scene).toBe('3d')
   })
 })
